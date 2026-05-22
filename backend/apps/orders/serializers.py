@@ -3,6 +3,8 @@ from .models import Order
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    medicine_name = serializers.CharField(source="medicine.name", read_only=True)
+    buyer_name = serializers.CharField(source="buyer.username", read_only=True)
 
     class Meta:
         model = Order

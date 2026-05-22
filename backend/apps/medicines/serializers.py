@@ -3,6 +3,7 @@ from .models import Medicine
 
 
 class MedicineSerializer(serializers.ModelSerializer):
+    supplier_name = serializers.CharField(source="supplier.username", read_only=True)
 
     class Meta:
 

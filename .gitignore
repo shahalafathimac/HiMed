@@ -1,6 +1,6 @@
 venv
 __pycheck__out__.json
-__pycache__/   
+__pycache__
 *.pyc
 *.pyo
 *.pyd

@@ -31,3 +31,10 @@ export const verifyMFA = (otp, token) => {
     }
   );
 };
+
+export const verifyLoginMFA = (userId, otp) => {
+  return api.post("/accounts/verify-login-mfa/", {
+    user_id: userId,
+    otp,
+  });
+};
