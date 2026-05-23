@@ -3,13 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { fetchMedicinesList, createMedicine, deleteMedicine } from "../../services/apiServices";
+import { fetchMedicinesList, createMedicine, deleteMedicine, updateMedicine } from "../../services/apiServices";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Edit } from "lucide-react";
 
 const medicineSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -21,6 +21,7 @@ const medicineSchema = z.object({
 export default function MyMedicines() {
   const queryClient = useQueryClient();
   const [showForm, setShowForm] = useState(false);
+  const [editingMedicine, setEditingMedicine] = useState(null);
 
   const { data: medicines, isLoading } = useQuery({
     queryKey: ["supplierMedicines"],
@@ -48,15 +49,35 @@ export default function MyMedicines() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["supplierMedicines"] })
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data) => updateMedicine(editingMedicine.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["supplierMedicines"] });
+      setShowForm(false);
+      setEditingMedicine(null);
+      reset();
+    }
+  });
+
   const onSubmit = (data) => {
-    createMutation.mutate(data);
+    if (editingMedicine) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold tracking-tight">My Medicines Inventory</h2>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => {
+          setShowForm(!showForm);
+          if (showForm) {
+            setEditingMedicine(null);
+            reset();
+          }
+        }}>
           <Plus className="mr-2 h-4 w-4" /> {showForm ? "Cancel" : "Add Medicine"}
         </Button>
       </div>
@@ -64,8 +85,8 @@ export default function MyMedicines() {
       {showForm && (
         <Card className="border-primary/20 shadow-md">
           <CardHeader>
-            <CardTitle>Add New Medicine</CardTitle>
-            <CardDescription>List a new product in the marketplace.</CardDescription>
+            <CardTitle>{editingMedicine ? "Edit Medicine" : "Add New Medicine"}</CardTitle>
+            <CardDescription>{editingMedicine ? "Update your product listing." : "List a new product in the marketplace."}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -96,8 +117,8 @@ export default function MyMedicines() {
                 />
                 {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
               </div>
-              <Button type="submit" disabled={isSubmitting || createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Save Medicine"}
+              <Button type="submit" disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}>
+                {createMutation.isPending || updateMutation.isPending ? "Saving..." : "Save Medicine"}
               </Button>
             </form>
           </CardContent>
@@ -120,16 +141,35 @@ export default function MyMedicines() {
             <CardContent>
               <p className="text-2xl font-bold text-primary mb-2">${med.price}</p>
               <p className="text-sm text-slate-500 line-clamp-2 mb-4">{med.description}</p>
-              <Button 
-                variant="destructive" 
-                size="sm" 
-                className="w-full opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => {
-                  if (window.confirm("Delete this medicine?")) deleteMutation.mutate(med.id);
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Remove Listing
-              </Button>
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => {
+                    setEditingMedicine(med);
+                    reset({
+                      name: med.name,
+                      price: med.price.toString(),
+                      stock: med.stock.toString(),
+                      description: med.description
+                    });
+                    setShowForm(true);
+                  }}
+                >
+                  <Edit className="mr-2 h-4 w-4" /> Edit
+                </Button>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => {
+                    if (window.confirm("Delete this medicine?")) deleteMutation.mutate(med.id);
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Remove
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}

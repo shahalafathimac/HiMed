@@ -32,9 +32,15 @@ export const verifyMFA = (otp, token) => {
   );
 };
 
-export const verifyLoginMFA = (userId, otp) => {
-  return api.post("/accounts/verify-login-mfa/", {
-    user_id: userId,
-    otp,
+export const verifyLoginMFA = (data) => {
+  return api.post(
+    "/accounts/verify-login-mfa/",
+    data
+  );
+};
+
+export const refreshToken = (refreshToken) => {
+  return api.post("/accounts/token/refresh/", {
+    refresh: refreshToken,
   });
 };

@@ -104,31 +104,65 @@ def login_view(request):
     })
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def verify_login_mfa(request):
+
     user_id = request.data.get("user_id")
     otp = request.data.get("otp")
+
+    print("VERIFY LOGIN MFA DATA:", request.data)
+
+    if not user_id:
+        return Response(
+            {"message": "user_id missing"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not otp:
+        return Response(
+            {"message": "OTP missing"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     try:
-        user = User.objects.get(id=user_id)
+        user = User.objects.get(id=int(user_id))
+
     except User.DoesNotExist:
-        return Response({
-            "message": "User not found"
-        }, status=404)
+        return Response(
+            {"message": "User not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    except ValueError:
+        return Response(
+            {"message": "Invalid user_id"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    print("USER FOUND:", user.email)
+    print("MFA SECRET:", user.mfa_secret)
+    print("OTP RECEIVED:", otp)
+
     is_valid = verify_totp(
         user.mfa_secret,
         otp
     )
+
+    print("OTP VALID:", is_valid)
+
     if not is_valid:
-        return Response({
-            "message": "Invalid MFA Code"
-        }, status=400)
+        return Response(
+            {"message": "Invalid MFA Code"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     refresh = RefreshToken.for_user(user)
+
     return Response({
         "message": "Login Successful",
         "access_token": str(refresh.access_token),
         "refresh_token": str(refresh),
     })
-
 
 
 

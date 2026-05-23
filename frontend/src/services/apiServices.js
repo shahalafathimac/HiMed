@@ -93,8 +93,13 @@ export const resolveContactMessage = (id) => {
 };
 
 // Notifications
-export const fetchNotifications = () => {
-  return api.get("/notifications/list/");
+export const fetchNotifications = async () => {
+  const response = await api.get(
+    "/notifications/list/"
+  );
+  console.log(response);
+
+  return response.data;
 };
 
 export const markNotificationRead = (id) => {

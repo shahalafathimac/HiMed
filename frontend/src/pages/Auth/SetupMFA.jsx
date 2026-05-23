@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { setupMFA, verifyMFASetup } from "../../services/apiServices";
+import { setupMFA, verifyMFA } from "../../services/authservice";
 import useAuthStore from "../../store/useAuthStore";
 import { Button } from "../../components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../../components/ui/card";
@@ -21,30 +21,34 @@ export default function SetupMFA() {
     }
   }, []);
 
-  const handleGenerateQR = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await setupMFA();
-      setQrCode(res.data.qr_code);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to generate QR code. Make sure you are logged in.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleGenerateQR = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const res = await setupMFA();
+        setQrCode(res.data.qr_code);
+      } catch (err) {
+        setError(err.response?.data?.message || "Failed to generate QR code. Make sure you are logged in.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-    if (otp.length < 6) return;
-    setVerifying(true);
-    setError("");
-    try {
-      await verifyMFASetup(otp);
+    const handleVerifyOTP = async (e) => {
+      e.preventDefault();
+      if (otp.length < 6) return;
+      setVerifying(true);
+      setError("");
+      try {
+        await verifyMFA(otp);
       
       // Finalize login by moving tempTokens to full Auth state
       if (tempTokens) {
-        setAuth(tempTokens.user, tempTokens.accessToken, tempTokens.refreshToken);
+        setAuth(
+          tempTokens.user,
+          tempTokens.accessToken,
+          tempTokens.refreshToken
+        );
       }
       
       // Force hard redirect to guarantee router recognizes the updated auth state

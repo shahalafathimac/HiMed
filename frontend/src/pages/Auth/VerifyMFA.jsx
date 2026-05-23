@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { verifyLoginMFA } from "../../services/apiServices";
+import { verifyLoginMFA } from "../../services/authservice";
 import useAuthStore from "../../store/useAuthStore";
 
 import { Button } from "../../components/ui/button";
@@ -28,11 +28,16 @@ export default function VerifyMFA() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Redirect to login if user refreshes page
-  // and MFA user id no longer exists
+  console.log("VERIFY MFA STORE:", {
+    mfaUserId,
+    isAuthenticated,
+  });
+
   useEffect(() => {
     if (!mfaUserId && !isAuthenticated) {
-      navigate("/login", { replace: true });
+      navigate("/login", {
+        replace: true,
+      });
     }
   }, [mfaUserId, isAuthenticated, navigate]);
 
@@ -57,37 +62,43 @@ export default function VerifyMFA() {
         otp,
       });
 
+      console.log(
+        "VERIFY MFA RESPONSE:",
+        response.data
+      );
+
       const {
         access_token,
         refresh_token,
       } = response.data;
 
-      // Save auth data to Zustand store
       setAuth(
-        { username: "User" },
+        {
+          id: mfaUserId,
+          username: "User",
+        },
         access_token,
         refresh_token
       );
 
-      console.log("MFA VERIFIED");
-      console.log(useAuthStore.getState());
+      console.log(
+        "AUTH AFTER MFA:",
+        useAuthStore.getState()
+      );
 
-      setLoading(false);
-
-      // Redirect to dashboard
       navigate("/dashboard", {
         replace: true,
       });
 
     } catch (err) {
-      console.error(err);
-
-      setLoading(false);
+      console.error("MFA ERROR:", err);
 
       setError(
         err?.response?.data?.message ||
         "Invalid verification code"
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,7 +126,7 @@ export default function VerifyMFA() {
 
           <CardDescription>
             Enter the 6-digit code from your
-            authenticator application.
+            authenticator application
           </CardDescription>
         </CardHeader>
 

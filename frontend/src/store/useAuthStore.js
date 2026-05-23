@@ -5,34 +5,13 @@ const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
-
       accessToken: null,
-
       refreshToken: null,
 
       isAuthenticated: false,
 
       mfaRequired: false,
-
       mfaUserId: null,
-
-      tempTokens: null,
-
-      setMFARequired: (required, userId) =>
-        set({
-          mfaRequired: required,
-          mfaUserId: userId,
-        }),
-
-      setTempTokens: (user, accessToken, refreshToken) =>
-        set({
-          tempTokens: { user, accessToken, refreshToken },
-        }),
-
-      updateUser: (userData) =>
-        set((state) => ({
-          user: { ...state.user, ...userData },
-        })),
 
       setAuth: (
         user,
@@ -43,10 +22,17 @@ const useAuthStore = create(
           user,
           accessToken,
           refreshToken,
+
           isAuthenticated: true,
+
           mfaRequired: false,
           mfaUserId: null,
-          tempTokens: null,
+        }),
+
+      setMfaRequired: (userId) =>
+        set({
+          mfaRequired: true,
+          mfaUserId: userId,
         }),
 
       logout: () =>
@@ -54,11 +40,20 @@ const useAuthStore = create(
           user: null,
           accessToken: null,
           refreshToken: null,
+
           isAuthenticated: false,
+
           mfaRequired: false,
           mfaUserId: null,
-          tempTokens: null,
         }),
+
+      updateUser: (userData) =>
+        set((state) => ({
+          user: {
+            ...state.user,
+            ...userData,
+          },
+        })),
     }),
     {
       name: "himed-auth-storage",
