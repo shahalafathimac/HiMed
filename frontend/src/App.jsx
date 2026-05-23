@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import useAuthStore from "./store/useAuthStore";
+import ProtectedRoutes from "./routes/ProtectedRoutes";
 
 // Layouts
 import PublicLayout from "./layouts/PublicLayout";
@@ -82,7 +83,14 @@ function App() {
               <DashboardLayout />
             </ProtectedRoute>
           }>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoutes>
+                  <Dashboard />
+                </ProtectedRoutes>
+              }
+            />
             
             {/* Admin Routes */}
             <Route path="/admin/pending-users" element={<RoleRoute role="admin"><PendingUsers /></RoleRoute>} />

@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { Activity, LayoutDashboard, Pill, ShoppingCart, MessageSquare, Users, LogOut, Bell, ShieldCheck, Settings } from "lucide-react";
+import { Activity, LayoutDashboard, Pill, ShoppingCart, MessageSquare, Users, LogOut, Bell, Settings } from "lucide-react";
 import useAuthStore from "../store/useAuthStore";
 import { Button } from "../components/ui/button";
 
@@ -9,7 +9,7 @@ export default function DashboardLayout() {
 
   const getLinksByRole = () => {
     const role = user?.role;
-    const securityLink = { name: "Security (MFA)", href: "/setup-mfa", icon: ShieldCheck };
+
 
     if (role === "admin") {
       return [
@@ -18,15 +18,14 @@ export default function DashboardLayout() {
         { name: "Medicines", href: "/catalog", icon: Pill },
         { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
         { name: "Messages", href: "/admin/messages", icon: MessageSquare },
-        securityLink,
       ];
     }
+    
     if (role === "supplier") {
       return [
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "My Medicines", href: "/supplier/medicines", icon: Pill },
         { name: "Orders", href: "/supplier/orders", icon: ShoppingCart },
-        securityLink,
       ];
     }
     if (role === "buyer") {
@@ -34,7 +33,6 @@ export default function DashboardLayout() {
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "Browse Medicines", href: "/catalog", icon: Pill },
         { name: "Order History", href: "/buyer/orders", icon: ShoppingCart },
-        securityLink,
       ];
     }
     return [];

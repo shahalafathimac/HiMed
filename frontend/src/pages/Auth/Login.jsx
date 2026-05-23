@@ -18,7 +18,7 @@ const loginSchema = z.object({
 
 export default function Login() {
   const navigate = useNavigate();
-  const { setAuth, setMfaRequired } = useAuthStore();
+  const { setAuth, setMFARequired } = useAuthStore();
   const [apiError, setApiError] = useState("");
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -27,26 +27,46 @@ export default function Login() {
 
   const onSubmit = async (data) => {
     setApiError("");
+
     try {
       const response = await loginUser(data);
       const resData = response.data;
 
+      console.log("LOGIN RESPONSE:", resData);
+
+      // Existing user with MFA enabled
       if (resData.mfa_required) {
-        // User already has MFA enabled, go to OTP verification
-        setMfaRequired(resData.user_id);
-        navigate("/verify-mfa");
-      } else {
-        // User doesn't have MFA enabled yet. Force them to set it up!
-        useAuthStore.getState().setTempTokens(
-          { username: data.email.split("@")[0], email: data.email },
-          resData.access_token,
-          resData.refresh_token
-        );
-        navigate("/setup-mfa");
+        setMFARequired(true, resData.user_id);
+
+        navigate("/verify-mfa", {
+          replace: true,
+        });
+
+        return;
       }
+
+      // New user without MFA
+      useAuthStore.getState().setTempTokens(
+        {
+          username: data.email.split("@")[0],
+          email: data.email,
+        },
+        resData.access_token,
+        resData.refresh_token
+      );
+
+      navigate("/setup-mfa", {
+        replace: true,
+      });
+
     } catch (err) {
       const errData = err.response?.data;
-      setApiError(errData?.message || errData?.error || "Invalid email or password");
+
+      setApiError(
+        errData?.message ||
+        errData?.error ||
+        "Invalid email or password"
+      );
     }
   };
 
