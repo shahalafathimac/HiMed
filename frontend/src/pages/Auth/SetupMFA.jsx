@@ -1,59 +1,43 @@
 import { useState, useEffect } from "react";
 import { setupMFA, verifyMFA } from "../../services/authservice";
-import useAuthStore from "../../store/useAuthStore";
 import { Button } from "../../components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../../components/ui/card";
 import { QrCode, ShieldCheck, AlertCircle } from "lucide-react";
 
 export default function SetupMFA() {
-  const { tempTokens, setAuth } = useAuthStore();
-  
   const [qrCode, setQrCode] = useState(null);
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
 
-  // Auto-generate QR on mount if not already present
   useEffect(() => {
     if (!qrCode && !loading) {
       handleGenerateQR();
     }
   }, []);
 
-    const handleGenerateQR = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const res = await setupMFA();
-        setQrCode(res.data.qr_code);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to generate QR code. Make sure you are logged in.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleGenerateQR = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await setupMFA();
+      setQrCode(res.data.qr_code);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to generate QR code. Make sure you are logged in.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const handleVerifyOTP = async (e) => {
-      e.preventDefault();
-      if (otp.length < 6) return;
-      setVerifying(true);
-      setError("");
-      try {
-        await verifyMFA(otp);
-      
-      // Finalize login by moving tempTokens to full Auth state
-      if (tempTokens) {
-        setAuth(
-          tempTokens.user,
-          tempTokens.accessToken,
-          tempTokens.refreshToken
-        );
-      }
-      
-      // Force hard redirect to guarantee router recognizes the updated auth state
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault();
+    if (otp.length < 6) return;
+    setVerifying(true);
+    setError("");
+    try {
+      await verifyMFA(otp);
       window.location.href = "/dashboard";
-      
     } catch (err) {
       setError(err.response?.data?.message || "Invalid OTP. Please try again.");
     } finally {
@@ -61,9 +45,8 @@ export default function SetupMFA() {
     }
   };
 
-  // Format the QR code src. If backend already includes the data uri prefix, use it directly.
-  const formattedQrCode = qrCode?.startsWith("data:image") 
-    ? qrCode 
+  const formattedQrCode = qrCode?.startsWith("data:image")
+    ? qrCode
     : `data:image/png;base64,${qrCode}`;
 
   return (
@@ -121,7 +104,7 @@ export default function SetupMFA() {
                   autoFocus
                 />
               </div>
-              
+
               <Button
                 type="submit"
                 className="w-full bg-[#0ea5e9] hover:bg-[#0284c7] shadow-md h-12 text-base font-semibold"

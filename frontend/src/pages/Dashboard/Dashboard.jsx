@@ -181,7 +181,7 @@ export default function Dashboard() {
           <>
             <StatCard
               title="My Medicines"
-              value="142"
+              value={dashboardInfo?.stats?.total_medicines || 0}
               icon={Pill}
               trend="+4 new this week"
             />
@@ -194,13 +194,15 @@ export default function Dashboard() {
             />
             <StatCard
               title="Pending Orders"
-              value="38"
+              value={dashboardInfo?.stats?.pending_orders || 0}
               icon={ShoppingCart}
               trend="15 received today"
             />
             <StatCard
               title="Revenue"
-              value="$45,231"
+              value={`₹${Number(
+                dashboardInfo?.stats?.revenue || 0
+              ).toLocaleString("en-IN")}`}
               icon={DollarSign}
               trend="+12% from last month"
             />

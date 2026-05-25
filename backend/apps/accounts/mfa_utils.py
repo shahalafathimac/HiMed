@@ -12,7 +12,7 @@ def generate_qr_code(user):
     totp = pyotp.TOTP(user.mfa_secret)
     provisioning_uri = totp.provisioning_uri(
         name=user.email,
-        issuer_name="MediLinkX"
+        issuer_name="Himed"
     )
 
     qr = qrcode.make(provisioning_uri)

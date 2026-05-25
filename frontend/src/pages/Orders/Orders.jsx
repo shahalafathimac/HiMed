@@ -106,7 +106,7 @@ function Orders() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{order.id}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.medicine}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{order.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">${order.total_price}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">₹{Number(order.total_price).toLocaleString("en-IN")}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
                         {order.status}

@@ -34,31 +34,19 @@ export default function Login() {
 
   const { setAuth, setMfaRequired } = useAuthStore();
 
-const onSubmit = async (data) => {
-  setApiError("");
+  const onSubmit = async (data) => {
+    setApiError("");
 
-  try {
-    const response = await loginUser(data);
-    const resData = response.data;
+    try {
+      const response = await loginUser(data);
+      const resData = response.data;
 
-    console.log("LOGIN RESPONSE:", resData);
+      if (resData.mfa_required) {
+        setMfaRequired(resData.user_id);
+        navigate("/verify-mfa", { replace: true });
+        return;
+      }
 
-    // Existing MFA user
-    if (resData.mfa_required) {
-      setMfaRequired(resData.user_id);
-
-      navigate("/verify-mfa", {
-        replace: true,
-      });
-
-      return;
-    }
-
-    // First login → MFA setup
-    if (
-      resData.access_token &&
-      resData.refresh_token
-    ) {
       setAuth(
         {
           username: data.email.split("@")[0],
@@ -68,23 +56,14 @@ const onSubmit = async (data) => {
         resData.refresh_token
       );
 
-      navigate("/setup-mfa", {
-        replace: true,
-      });
-
-      return;
+      navigate("/setup-mfa", { replace: true });
+    } catch (err) {
+      setApiError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        "Invalid email or password"
+      );
     }
-
-  } catch (err) {
-    console.error(err);
-
-    setApiError(
-      err.response?.data?.message ||
-      err.response?.data?.error ||
-      "Invalid email or password"
-    );
-  }
-
   };
 
   return (
@@ -122,14 +101,12 @@ const onSubmit = async (data) => {
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-
                 <Input
                   id="email"
                   type="email"
                   placeholder="m@example.com"
                   {...register("email")}
                 />
-
                 {errors.email && (
                   <p className="text-xs text-red-600">
                     {errors.email.message}
@@ -139,14 +116,12 @@ const onSubmit = async (data) => {
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-
                 <Input
                   id="password"
                   type="password"
                   placeholder="Your password"
                   {...register("password")}
                 />
-
                 {errors.password && (
                   <p className="text-xs text-red-600">
                     {errors.password.message}

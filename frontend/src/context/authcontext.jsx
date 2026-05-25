@@ -1,57 +1,39 @@
 import { createContext, useState, useEffect } from "react";
+import { getCookie, setCookie, removeCookie } from "../utils/cookies";
 
 export const AuthContext = createContext();
 
 function AuthProvider({ children }) {
 
   const [token, setToken] = useState(
-    localStorage.getItem("access") || null
+    getCookie("access_token") || null
   );
 
   const [isAuthenticated, setIsAuthenticated] = useState(
-    !!localStorage.getItem("access")
+    !!getCookie("access_token")
   );
 
-  // Login Function
   const login = (accessToken) => {
-
-    localStorage.setItem(
-      "access",
-      accessToken
-    );
-
+    setCookie("access_token", accessToken);
     setToken(accessToken);
-
     setIsAuthenticated(true);
   };
 
-  // Logout Function
   const logout = () => {
-
-    localStorage.removeItem("access");
-
+    removeCookie("access_token");
     setToken(null);
-
     setIsAuthenticated(false);
   };
 
   useEffect(() => {
-
-    const storedToken =
-      localStorage.getItem("access");
-
+    const storedToken = getCookie("access_token");
     if (storedToken) {
-
       setToken(storedToken);
-
       setIsAuthenticated(true);
-
     }
-
   }, []);
 
   return (
-
     <AuthContext.Provider
       value={{
         token,
@@ -60,11 +42,8 @@ function AuthProvider({ children }) {
         logout,
       }}
     >
-
       {children}
-
     </AuthContext.Provider>
-
   );
 }
 

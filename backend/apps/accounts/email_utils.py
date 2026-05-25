@@ -5,20 +5,20 @@ from django.conf import settings
 
 def send_registration_email_to_user(user):
 
-    subject = "Welcome to MediLinkX"
+    subject = "Welcome to Himed"
 
     message = f"""
 
 Hello {user.username},
 
-Your MediLinkX account has been created successfully.
+Your Himed account has been created successfully.
 
 Your account is currently pending admin approval.
 
 You will be notified once approved.
 
 Thank you,
-MediLinkX Team
+Himed Team
 """
 
     send_mail(

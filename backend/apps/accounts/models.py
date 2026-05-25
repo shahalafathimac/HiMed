@@ -2,6 +2,7 @@ from django.db import models
 
 from django.contrib.auth.models import AbstractUser
 
+
 import pyotp
 
 
@@ -26,7 +27,6 @@ class User(AbstractUser):
         default=False
     )
 
-    # MFA
     mfa_secret = models.CharField(
         max_length=255,
         blank=True,

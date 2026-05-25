@@ -17,27 +17,15 @@ import { ShieldCheck, ArrowLeft } from "lucide-react";
 export default function VerifyMFA() {
   const navigate = useNavigate();
 
-  const {
-    mfaUserId,
-    isAuthenticated,
-    setAuth,
-    logout,
-  } = useAuthStore();
+  const { mfaUserId, isAuthenticated, setAuth, logout } = useAuthStore();
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  console.log("VERIFY MFA STORE:", {
-    mfaUserId,
-    isAuthenticated,
-  });
-
   useEffect(() => {
     if (!mfaUserId && !isAuthenticated) {
-      navigate("/login", {
-        replace: true,
-      });
+      navigate("/login", { replace: true });
     }
   }, [mfaUserId, isAuthenticated, navigate]);
 
@@ -57,45 +45,19 @@ export default function VerifyMFA() {
       setLoading(true);
       setError("");
 
-      const response = await verifyLoginMFA({
-        user_id: mfaUserId,
-        otp,
-      });
-
-      console.log(
-        "VERIFY MFA RESPONSE:",
-        response.data
-      );
-
-      const {
-        access_token,
-        refresh_token,
-      } = response.data;
+      const mfaResponse = await verifyLoginMFA({ user_id: mfaUserId, otp });
+      const { access_token, refresh_token } = mfaResponse.data;
 
       setAuth(
-        {
-          id: mfaUserId,
-          username: "User",
-        },
+        { id: mfaUserId, username: "User" },
         access_token,
         refresh_token
       );
 
-      console.log(
-        "AUTH AFTER MFA:",
-        useAuthStore.getState()
-      );
-
-      navigate("/dashboard", {
-        replace: true,
-      });
-
+      navigate("/dashboard", { replace: true });
     } catch (err) {
-      console.error("MFA ERROR:", err);
-
       setError(
-        err?.response?.data?.message ||
-        "Invalid verification code"
+        err?.response?.data?.message || "Invalid verification code"
       );
     } finally {
       setLoading(false);
@@ -104,10 +66,7 @@ export default function VerifyMFA() {
 
   const handleCancel = () => {
     logout();
-
-    navigate("/login", {
-      replace: true,
-    });
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -123,18 +82,13 @@ export default function VerifyMFA() {
           <CardTitle className="text-2xl">
             Two-Factor Authentication
           </CardTitle>
-
           <CardDescription>
-            Enter the 6-digit code from your
-            authenticator application
+            Enter the 6-digit code from your authenticator application
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          <form
-            onSubmit={handleSubmit}
-            className="space-y-5"
-          >
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
                 {error}
@@ -148,11 +102,7 @@ export default function VerifyMFA() {
               autoFocus
               inputMode="numeric"
               placeholder="000000"
-              onChange={(e) =>
-                setOtp(
-                  e.target.value.replace(/\D/g, "")
-                )
-              }
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
               className="
                 w-full
                 h-16
@@ -172,15 +122,10 @@ export default function VerifyMFA() {
 
             <Button
               type="submit"
-              disabled={
-                loading ||
-                otp.length !== 6
-              }
+              disabled={loading || otp.length !== 6}
               className="w-full h-11"
             >
-              {loading
-                ? "Verifying..."
-                : "Verify & Sign In"}
+              {loading ? "Verifying..." : "Verify & Sign In"}
             </Button>
 
             <button

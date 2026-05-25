@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { 
-  createContactMessage, 
-  fetchContactMessages, 
-  replyContactMessage, 
-  resolveContactMessage, 
-  fetchDashboardData 
+import useAuthStore from "../../store/useAuthStore";
+import {
+  createContactMessage,
+  fetchContactMessages,
+  replyContactMessage,
+  resolveContactMessage,
+  fetchDashboardData
 } from "../../services/apiServices";
 import Navbar from "../../components/Navbar/Navbar";
 
@@ -21,8 +22,8 @@ function Contact() {
 
   const checkRoleAndLoadData = async () => {
     try {
-      const token = localStorage.getItem("access");
-      if (token) {
+      const { isAuthenticated } = useAuthStore.getState();
+      if (isAuthenticated) {
         const dashRes = await fetchDashboardData();
         setRole(dashRes.data.role);
         
