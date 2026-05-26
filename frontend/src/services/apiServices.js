@@ -13,11 +13,15 @@ export const fetchMedicinesList = () => {
 export const fetchMedicines = fetchMedicinesList;
 
 export const createMedicine = (data) => {
-  return api.post("/medicines/create/", data);
+  return api.post("/medicines/create/", data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 };
 
 export const updateMedicine = (id, data) => {
-  return api.put(`/medicines/update/${id}/`, data);
+  return api.put(`/medicines/update/${id}/`, data, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 };
 
 export const deleteMedicine = (id) => {
@@ -59,6 +63,27 @@ export const updateOrderStatus = (id, data) => {
 
 export const fetchAdminOrders = () => {
   return api.get("/orders/admin-orders/");
+};
+
+// Cart
+export const fetchCart = () => {
+  return api.get("/orders/cart/");
+};
+
+export const addCartItem = (data) => {
+  return api.post("/orders/cart/add/", data);
+};
+
+export const updateCartItem = (id, data) => {
+  return api.put(`/orders/cart/update/${id}/`, data);
+};
+
+export const removeCartItem = (id) => {
+  return api.delete(`/orders/cart/remove/${id}/`);
+};
+
+export const checkoutCart = () => {
+  return api.post("/orders/cart/checkout/");
 };
 
 // Admin User Management

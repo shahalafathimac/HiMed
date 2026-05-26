@@ -32,6 +32,8 @@ import {
   DollarSign,
   Activity,
   AlertTriangle,
+  Truck,
+  Store,
 } from "lucide-react";
 
 import useAuthStore from "../../store/useAuthStore";
@@ -40,7 +42,6 @@ export default function Dashboard() {
   const {
     user,
     updateUser,
-    logout,
   } = useAuthStore();
 
   const { data: dashboardInfo, isLoading: dashboardLoading } = useQuery({
@@ -104,9 +105,23 @@ export default function Dashboard() {
 
   const role = dashboardInfo?.role;
   const lowStockCount = lowStockMedicines?.length || 0;
+  const buyerStats = dashboardInfo?.stats || {};
 
-  const revenueChartData =
-    medicineAnalytics.monthly_revenue || [
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(value || 0));
+
+  const revenueChartData = role === "buyer"
+    ? [
+      { name: "Pending", total: buyerStats.status_counts?.pending || 0 },
+      { name: "Processing", total: buyerStats.status_counts?.processing || 0 },
+      { name: "Shipped", total: buyerStats.status_counts?.shipped || 0 },
+      { name: "Out for Delivery", total: buyerStats.status_counts?.out_for_delivery || 0 },
+    ]
+    : medicineAnalytics.monthly_revenue || [
       { name: "Jan", total: 3200 },
       { name: "Feb", total: 4100 },
       { name: "Mar", total: 2800 },
@@ -115,8 +130,14 @@ export default function Dashboard() {
       { name: "Jun", total: 6100 },
     ];
 
-  const orderChartData =
-    medicineAnalytics.monthly_orders || [
+  const orderChartData = role === "buyer"
+    ? [
+      { name: "Active", total: buyerStats.active_orders || 0 },
+      { name: "Pending Deliveries", total: buyerStats.pending_deliveries || 0 },
+      { name: "Low Stock Alerts", total: buyerStats.low_stock_alerts || 0 },
+      { name: "Saved Suppliers", total: buyerStats.saved_suppliers || 0 },
+    ]
+    : medicineAnalytics.monthly_orders || [
       { name: "Jan", total: 3200 },
       { name: "Feb", total: 4100 },
       { name: "Mar", total: 2800 },
@@ -136,8 +157,7 @@ export default function Dashboard() {
           <p className="text-slate-500 mt-1">
             Welcome back{" "}
             <span className="font-medium">
-              {dashboardInfo?.username ||
-                user?.username}
+              {dashboardInfo?.username || user?.username}
             </span>
           </p>
         </div>
@@ -150,30 +170,10 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {role === "admin" && (
           <>
-            <StatCard
-              title="Total Users"
-              value="2543"
-              icon={Users}
-              trend="+12% from last month"
-            />
-            <StatCard
-              title="Total Medicines"
-              value="12300"
-              icon={Pill}
-              trend="+8% from last month"
-            />
-            <StatCard
-              title="Total Orders"
-              value="45231"
-              icon={ShoppingCart}
-              trend="+22% from last month"
-            />
-            <StatCard
-              title="Platform Revenue"
-              value="$2.4M"
-              icon={DollarSign}
-              trend="+18% from last month"
-            />
+            <StatCard title="Total Users" value="2543" icon={Users} trend="+12% from last month" />
+            <StatCard title="Total Medicines" value="12300" icon={Pill} trend="+8% from last month" />
+            <StatCard title="Total Orders" value="45231" icon={ShoppingCart} trend="+22% from last month" />
+            <StatCard title="Platform Revenue" value="$2.4M" icon={DollarSign} trend="+18% from last month" />
           </>
         )}
 
@@ -196,13 +196,11 @@ export default function Dashboard() {
               title="Pending Orders"
               value={dashboardInfo?.stats?.pending_orders || 0}
               icon={ShoppingCart}
-              trend="15 received today"
+              trend="Needs processing"
             />
             <StatCard
               title="Revenue"
-              value={`₹${Number(
-                dashboardInfo?.stats?.revenue || 0
-              ).toLocaleString("en-IN")}`}
+              value={formatCurrency(dashboardInfo?.stats?.revenue)}
               icon={DollarSign}
               trend="+12% from last month"
             />
@@ -213,27 +211,40 @@ export default function Dashboard() {
           <>
             <StatCard
               title="Active Orders"
-              value="4"
+              value={buyerStats.active_orders || 0}
               icon={ShoppingCart}
-              trend="2 arriving today"
+              trend="Pending, processing, shipped, out for delivery"
             />
             <StatCard
-              title="Total Spent"
-              value="$12,450"
+              title="Total Purchases This Month"
+              value={formatCurrency(buyerStats.total_purchases_this_month)}
               icon={DollarSign}
-              trend="+5% this month"
+              trend="Excludes cancelled orders"
             />
             <StatCard
               title="Available Medicines"
-              value="12300+"
+              value={buyerStats.available_medicines || 0}
               icon={Pill}
-              trend="Browse catalog"
+              trend="Ready to order"
             />
             <StatCard
-              title="Notifications"
-              value="3"
-              icon={Activity}
-              trend="3 unread"
+              title="Low Stock Alerts"
+              value={buyerStats.low_stock_alerts || 0}
+              icon={AlertTriangle}
+              trend="Medicines below 10 stock"
+              alert={buyerStats.low_stock_alerts > 0}
+            />
+            <StatCard
+              title="Pending Deliveries"
+              value={buyerStats.pending_deliveries || 0}
+              icon={Truck}
+              trend="Processing, shipped, out for delivery"
+            />
+            <StatCard
+              title="Saved Suppliers"
+              value={buyerStats.saved_suppliers || 0}
+              icon={Store}
+              trend="Suppliers from your purchases"
             />
           </>
         )}
@@ -243,25 +254,19 @@ export default function Dashboard() {
         <Card className="col-span-4">
           <CardHeader>
             <CardTitle>
-              Revenue Overview
+              {role === "buyer" ? "Active Order Status" : "Revenue Overview"}
             </CardTitle>
           </CardHeader>
 
           <CardContent>
             <div className="h-[280px]">
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
+              <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={revenueChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis />
+                  <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Bar
-                    dataKey="total"
-                    fill="#0ea5e9"
-                  />
+                  <Bar dataKey="total" fill="#0ea5e9" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -271,26 +276,19 @@ export default function Dashboard() {
         <Card className="col-span-3">
           <CardHeader>
             <CardTitle>
-              Order Trends
+              {role === "buyer" ? "Buyer Summary" : "Order Trends"}
             </CardTitle>
           </CardHeader>
 
           <CardContent>
             <div className="h-[280px]">
-              <ResponsiveContainer
-                width="100%"
-                height="100%"
-              >
+              <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={orderChartData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis />
+                  <YAxis allowDecimals={false} />
                   <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#6366f1"
-                  />
+                  <Line type="monotone" dataKey="total" stroke="#6366f1" />
                 </LineChart>
               </ResponsiveContainer>
             </div>

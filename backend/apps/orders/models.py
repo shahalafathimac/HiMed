@@ -11,7 +11,9 @@ class Order(models.Model):
 
         ("pending", "Pending"),
         ("confirmed", "Confirmed"),
+        ("processing", "Processing"),
         ("shipped", "Shipped"),
+        ("out_for_delivery", "Out for Delivery"),
         ("delivered", "Delivered"),
         ("cancelled", "Cancelled"),
     ]
@@ -46,3 +48,58 @@ class Order(models.Model):
 
     def __str__(self):
         return f"{self.buyer.username} - {self.medicine.name}"
+
+
+class Cart(models.Model):
+
+    buyer = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="cart"
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def __str__(self):
+        return f"{self.buyer.username}'s cart"
+
+
+class CartItem(models.Model):
+
+    cart = models.ForeignKey(
+        Cart,
+        on_delete=models.CASCADE,
+        related_name="items"
+    )
+
+    medicine = models.ForeignKey(
+        Medicine,
+        on_delete=models.CASCADE
+    )
+
+    quantity = models.PositiveIntegerField(
+        default=1
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    class Meta:
+        unique_together = (
+            "cart",
+            "medicine"
+        )
+
+    def __str__(self):
+        return f"{self.quantity} x {self.medicine.name}"

@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
+import { ImagePlus } from "lucide-react";
 
 export default function OrderHistory() {
   const queryClient = useQueryClient();
@@ -24,13 +25,22 @@ export default function OrderHistory() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending': return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case 'confirmed': return <Badge className="bg-blue-100 text-blue-800">Confirmed</Badge>;
+      case 'confirmed':
+      case 'processing': return <Badge className="bg-blue-100 text-blue-800">Processing</Badge>;
       case 'shipped': return <Badge className="bg-indigo-100 text-indigo-800">Shipped</Badge>;
+      case 'out_for_delivery': return <Badge className="bg-purple-100 text-purple-800">Out for Delivery</Badge>;
       case 'delivered': return <Badge className="bg-green-100 text-green-800">Delivered</Badge>;
       case 'cancelled': return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
     }
   };
+
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(price || 0));
 
   return (
     <div className="space-y-6">
@@ -65,9 +75,26 @@ export default function OrderHistory() {
               {!isLoading && orders?.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">#{order.id}</TableCell>
-                  <TableCell>{order.medicine}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-14 w-14 overflow-hidden rounded-md bg-slate-100">
+                        {order.medicine_image_url ? (
+                          <img
+                            src={order.medicine_image_url}
+                            alt={order.medicine_name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-slate-400">
+                            <ImagePlus className="h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
+                      <span className="font-medium">{order.medicine_name}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>{order.quantity}</TableCell>
-                  <TableCell className="font-semibold text-slate-700">${order.total_price}</TableCell>
+                  <TableCell className="font-semibold text-slate-700">{formatPrice(order.total_price)}</TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
                   <TableCell className="text-right">
                     {order.status === 'pending' && (

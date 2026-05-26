@@ -3,6 +3,7 @@ from apps.accounts.permissions import IsSupplier
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import Medicine
 from .serializers import MedicineSerializer
 from rest_framework.decorators import api_view
@@ -15,11 +16,17 @@ class CreateMedicineView(APIView):
         IsAuthenticated,
         IsSupplier
     ]
+    parser_classes = [
+        MultiPartParser,
+        FormParser,
+        JSONParser
+    ]
 
     def post(self, request):
 
         serializer = MedicineSerializer(
-            data=request.data
+            data=request.data,
+            context={"request": request}
         )
 
         if serializer.is_valid():
@@ -48,10 +55,15 @@ class MedicineListView(APIView):
     def get(self, request):
 
         medicines = Medicine.objects.all()
+        if request.user.role == "supplier":
+            medicines = medicines.filter(
+                supplier=request.user
+            )
 
         serializer = MedicineSerializer(
             medicines,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(
@@ -66,6 +78,11 @@ class UpdateMedicineView(APIView):
     permission_classes = [
         IsAuthenticated,
         IsSupplier
+    ]
+    parser_classes = [
+        MultiPartParser,
+        FormParser,
+        JSONParser
     ]
 
     def put(self, request, pk):
@@ -87,7 +104,8 @@ class UpdateMedicineView(APIView):
         serializer = MedicineSerializer(
             medicine,
             data=request.data,
-            partial=True
+            partial=True,
+            context={"request": request}
         )
 
         if serializer.is_valid():
@@ -142,6 +160,10 @@ def low_stock_medicines(request):
     medicines = Medicine.objects.filter(
         stock__lt=10
     )
+    if request.user.role == "supplier":
+        medicines = medicines.filter(
+            supplier=request.user
+        )
 
     serializer = MedicineSerializer(
         medicines,
@@ -158,9 +180,15 @@ def low_stock_medicines(request):
 @permission_classes([IsAuthenticated])
 def medicine_analytics(request):
 
-    total_medicines = Medicine.objects.count()
+    medicines = Medicine.objects.all()
+    if request.user.role == "supplier":
+        medicines = medicines.filter(
+            supplier=request.user
+        )
 
-    low_stock = Medicine.objects.filter(
+    total_medicines = medicines.count()
+
+    low_stock = medicines.filter(
         stock__lt=10
     ).count()
 

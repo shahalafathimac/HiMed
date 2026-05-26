@@ -65,8 +65,10 @@ function Orders() {
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed': return 'bg-blue-100 text-blue-800';
+      case 'confirmed':
+      case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-indigo-100 text-indigo-800';
+      case 'out_for_delivery': return 'bg-purple-100 text-purple-800';
       case 'delivered': return 'bg-green-100 text-green-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -109,7 +111,7 @@ function Orders() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-700">₹{Number(order.total_price).toLocaleString("en-IN")}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                        {order.status}
+                        {order.status === "confirmed" ? "processing" : order.status.replaceAll("_", " ")}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -126,8 +128,9 @@ function Orders() {
                           className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                         >
                           <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
+                          <option value="processing">Processing</option>
                           <option value="shipped">Shipped</option>
+                          <option value="out_for_delivery">Out for Delivery</option>
                           <option value="delivered">Delivered</option>
                         </select>
                       )}

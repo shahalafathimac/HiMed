@@ -23,6 +23,12 @@ class Medicine(models.Model):
         decimal_places=2
     )
 
+    image = models.ImageField(
+        upload_to="medicine_images/",
+        blank=True,
+        null=True
+    )
+
     expiry_date = models.DateField()
 
     created_at = models.DateTimeField(

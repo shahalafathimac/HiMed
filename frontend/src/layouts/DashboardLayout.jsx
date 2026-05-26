@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   LayoutDashboard,
@@ -18,6 +19,7 @@ import {
 import useAuthStore from "../store/useAuthStore";
 import { useNotifications } from "../hooks/useNotifications";
 import { Button } from "../components/ui/button";
+import { fetchCart } from "../services/apiServices";
 
 export default function DashboardLayout() {
   const { user, logout } = useAuthStore();
@@ -47,6 +49,14 @@ export default function DashboardLayout() {
     });
   };
 
+  const { data: cartResponse } = useQuery({
+    queryKey: ["buyerCart"],
+    queryFn: fetchCart,
+    enabled: user?.role === "buyer",
+  });
+
+  const cartCount = cartResponse?.data?.item_count || 0;
+
   const getLinksByRole = () => {
     const role = user?.role;
 
@@ -70,7 +80,7 @@ export default function DashboardLayout() {
     if (role === "buyer") {
       return [
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-        { name: "Browse Medicines", href: "/catalog", icon: Pill },
+        { name: "Browse Medicines", href: "/buyer/medicines", icon: Pill },
         { name: "Order History", href: "/buyer/orders", icon: ShoppingCart },
       ];
     }
@@ -80,17 +90,17 @@ export default function DashboardLayout() {
   const links = getLinksByRole();
 
   return (
-    <div className={`flex min-h-screen bg-slate-50 ${isDarkMode ? 'dark:bg-slate-950' : ''}`}>
+    <div className={`flex h-screen overflow-hidden bg-slate-50 ${isDarkMode ? 'dark:bg-slate-950' : ''}`}>
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r bg-white dark:bg-slate-900 hidden md:block">
-        <div className="h-full flex flex-col">
+      <aside className="w-64 h-screen flex-shrink-0 border-r bg-white dark:bg-slate-900 hidden md:block">
+        <div className="h-full min-h-0 flex flex-col">
           <div className="h-16 flex items-center px-6 border-b">
             <Link to="/" className="flex items-center space-x-2">
               <Activity className="h-6 w-6 text-primary" />
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">HiMed</span>
             </Link>
           </div>
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          <nav className="flex-1 min-h-0 px-4 py-6 space-y-1 overflow-y-auto">
             {links.map((link) => {
               const Icon = link.icon;
               const isActive = location.pathname === link.href;
@@ -128,7 +138,7 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <header className="h-16 border-b bg-white dark:bg-slate-900 flex items-center justify-between px-6 sticky top-0 z-10">
           <div className="flex items-center md:hidden">
             <Link to="/" className="flex items-center space-x-2">
@@ -137,6 +147,25 @@ export default function DashboardLayout() {
             </Link>
           </div>
           <div className="ml-auto flex items-center space-x-4">
+            {user?.role === "buyer" && (
+              <Link
+                to="/buyer/cart"
+                className={`relative p-2 rounded-full transition-colors ${
+                  location.pathname === "/buyer/cart"
+                    ? "bg-primary/10 text-primary"
+                    : "text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+                title="Cart"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-white">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
             {/* Notification Bell */}
             <div className="relative">
               <button
@@ -240,7 +269,7 @@ export default function DashboardLayout() {
             </button>
           </div>
         </header>
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 min-h-0 p-6 overflow-y-auto">
           <Outlet />
         </main>
       </div>

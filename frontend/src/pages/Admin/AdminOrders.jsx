@@ -16,8 +16,10 @@ export default function AdminOrders() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending': return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
-      case 'confirmed': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Confirmed</Badge>;
+      case 'confirmed':
+      case 'processing': return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Processing</Badge>;
       case 'shipped': return <Badge className="bg-indigo-100 text-indigo-800 hover:bg-indigo-200">Shipped</Badge>;
+      case 'out_for_delivery': return <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">Out for Delivery</Badge>;
       case 'delivered': return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Delivered</Badge>;
       case 'cancelled': return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Cancelled</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;

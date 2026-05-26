@@ -17,6 +17,8 @@ import SetupMFA from "./pages/Auth/SetupMFA";
 import VerifyMFA from "./pages/Auth/VerifyMFA";
 
 import Dashboard from "./pages/Dashboard/Dashboard";
+import Medicines from "./pages/Medicines/Medicines";
+import MedicineDetails from "./pages/Medicines/MedicineDetails";
 
 import PendingUsers from "./pages/Admin/PendingUsers";
 import AdminOrders from "./pages/Admin/AdminOrders";
@@ -25,6 +27,7 @@ import ContactMessages from "./pages/Admin/ContactMessages";
 import MyMedicines from "./pages/Supplier/MyMedicines";
 import SupplierOrders from "./pages/Supplier/SupplierOrders";
 
+import Cart from "./pages/Buyer/Cart";
 import OrderHistory from "./pages/Buyer/OrderHistory";
 
 const queryClient = new QueryClient({
@@ -77,6 +80,9 @@ function App() {
             <Route path="/admin/messages" element={<RoleRoute role="admin"><ContactMessages /></RoleRoute>} />
             <Route path="/supplier/medicines" element={<RoleRoute role="supplier"><MyMedicines /></RoleRoute>} />
             <Route path="/supplier/orders" element={<RoleRoute role="supplier"><SupplierOrders /></RoleRoute>} />
+            <Route path="/buyer/medicines" element={<RoleRoute role="buyer"><Medicines /></RoleRoute>} />
+            <Route path="/buyer/medicines/:id" element={<RoleRoute role="buyer"><MedicineDetails /></RoleRoute>} />
+            <Route path="/buyer/cart" element={<RoleRoute role="buyer"><Cart /></RoleRoute>} />
             <Route path="/buyer/orders" element={<RoleRoute role="buyer"><OrderHistory /></RoleRoute>} />
           </Route>
 

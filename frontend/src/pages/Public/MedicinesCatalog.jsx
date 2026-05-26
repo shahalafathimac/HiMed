@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchMedicinesList } from "../../services/apiServices";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
-import { Search } from "lucide-react";
+import { ImagePlus, Search } from "lucide-react";
 import { Input } from "../../components/ui/input";
 import { useState } from "react";
 import { Button } from "../../components/ui/button";
@@ -21,6 +21,12 @@ export default function MedicinesCatalog() {
   });
 
   const filtered = medicines?.filter(m => m.name.toLowerCase().includes(search.toLowerCase())) || [];
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 2,
+    }).format(Number(price || 0));
 
   return (
     <div className="bg-slate-50 dark:bg-slate-950 min-h-screen py-12">
@@ -61,11 +67,24 @@ export default function MedicinesCatalog() {
         {!isLoading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtered.map(med => (
-              <Card key={med.id} className="hover:-translate-y-1 transition-transform duration-300">
+              <Card key={med.id} className="overflow-hidden hover:-translate-y-1 transition-transform duration-300">
+                <div className="aspect-[4/3] w-full bg-slate-100 dark:bg-slate-900">
+                  {med.image_url ? (
+                    <img
+                      src={med.image_url}
+                      alt={med.name}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-slate-400">
+                      <ImagePlus className="h-10 w-10" />
+                    </div>
+                  )}
+                </div>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <CardTitle className="text-xl">{med.name}</CardTitle>
-                    <Badge variant="secondary" className="text-sm font-bold">${med.price}</Badge>
+                    <Badge variant="secondary" className="text-sm font-bold">{formatPrice(med.price)}</Badge>
                   </div>
                 </CardHeader>
                 <CardContent>

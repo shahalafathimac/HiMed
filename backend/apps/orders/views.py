@@ -3,8 +3,8 @@ from apps.accounts.permissions import (IsBuyer,IsSupplier,IsAdmin)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Order
-from .serializers import OrderSerializer
+from .models import Order, Cart, CartItem
+from .serializers import OrderSerializer, CartSerializer
 from apps.medicines.models import Medicine
 from apps.notifications.services import create_notification
 # Create your views here.
@@ -112,7 +112,8 @@ class OrderHistoryView(APIView):
 
         serializer = OrderSerializer(
             orders,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(
@@ -188,7 +189,8 @@ class SupplierOrdersView(APIView):
 
         serializer = OrderSerializer(
             orders,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(
@@ -238,12 +240,277 @@ class AdminOrdersView(APIView):
 
         serializer = OrderSerializer(
             orders,
-            many=True
+            many=True,
+            context={"request": request}
         )
 
         return Response(
             serializer.data
         )
+
+
+def get_or_create_cart(user):
+    cart, created = Cart.objects.get_or_create(
+        buyer=user
+    )
+    return cart
+
+
+class CartView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsBuyer
+    ]
+
+    def get(self, request):
+
+        cart = get_or_create_cart(
+            request.user
+        )
+
+        serializer = CartSerializer(
+            cart,
+            context={"request": request}
+        )
+
+        return Response(
+            serializer.data
+        )
+
+
+class AddCartItemView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsBuyer
+    ]
+
+    def post(self, request):
+
+        medicine_id = request.data.get(
+            "medicine_id"
+        )
+
+        quantity = int(
+            request.data.get(
+                "quantity",
+                1
+            )
+        )
+
+        if quantity < 1:
+            return Response({
+                "message":
+                "Quantity must be at least 1"
+            }, status=400)
+
+        try:
+            medicine = Medicine.objects.get(
+                id=medicine_id
+            )
+        except Medicine.DoesNotExist:
+            return Response({
+                "message":
+                "Medicine not found"
+            }, status=404)
+
+        if medicine.stock < quantity:
+            return Response({
+                "message":
+                "Insufficient stock"
+            }, status=400)
+
+        cart = get_or_create_cart(
+            request.user
+        )
+
+        item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            medicine=medicine,
+            defaults={"quantity": quantity}
+        )
+
+        if not created:
+            next_quantity = item.quantity + quantity
+            if medicine.stock < next_quantity:
+                return Response({
+                    "message":
+                    "Insufficient stock"
+                }, status=400)
+
+            item.quantity = next_quantity
+            item.save()
+
+        serializer = CartSerializer(
+            cart,
+            context={"request": request}
+        )
+
+        return Response(
+            serializer.data,
+            status=201
+        )
+
+
+class UpdateCartItemView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsBuyer
+    ]
+
+    def put(self, request, pk):
+
+        quantity = int(
+            request.data.get(
+                "quantity",
+                1
+            )
+        )
+
+        if quantity < 1:
+            return Response({
+                "message":
+                "Quantity must be at least 1"
+            }, status=400)
+
+        try:
+            item = CartItem.objects.select_related(
+                "cart",
+                "medicine"
+            ).get(
+                id=pk,
+                cart__buyer=request.user
+            )
+        except CartItem.DoesNotExist:
+            return Response({
+                "message":
+                "Cart item not found"
+            }, status=404)
+
+        if item.medicine.stock < quantity:
+            return Response({
+                "message":
+                "Insufficient stock"
+            }, status=400)
+
+        item.quantity = quantity
+        item.save()
+
+        serializer = CartSerializer(
+            item.cart,
+            context={"request": request}
+        )
+
+        return Response(
+            serializer.data
+        )
+
+
+class RemoveCartItemView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsBuyer
+    ]
+
+    def delete(self, request, pk):
+
+        try:
+            item = CartItem.objects.get(
+                id=pk,
+                cart__buyer=request.user
+            )
+        except CartItem.DoesNotExist:
+            return Response({
+                "message":
+                "Cart item not found"
+            }, status=404)
+
+        cart = item.cart
+        item.delete()
+
+        serializer = CartSerializer(
+            cart,
+            context={"request": request}
+        )
+
+        return Response(
+            serializer.data
+        )
+
+
+class CheckoutCartView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsBuyer
+    ]
+
+    def post(self, request):
+
+        cart = get_or_create_cart(
+            request.user
+        )
+
+        items = cart.items.select_related(
+            "medicine",
+            "medicine__supplier"
+        )
+
+        if not items.exists():
+            return Response({
+                "message":
+                "Cart is empty"
+            }, status=400)
+
+        for item in items:
+            if item.medicine.stock < item.quantity:
+                return Response({
+                    "message":
+                    f"Insufficient stock for {item.medicine.name}"
+                }, status=400)
+
+        order_ids = []
+        for item in items:
+            medicine = item.medicine
+            order = Order.objects.create(
+                buyer=request.user,
+                medicine=medicine,
+                quantity=item.quantity,
+                total_price=medicine.price * item.quantity
+            )
+            order_ids.append(
+                order.id
+            )
+
+            create_notification(
+                request.user,
+                "Order Created",
+                f"Your order for {medicine.name} was placed successfully.",
+                "order"
+            )
+
+            create_notification(
+                medicine.supplier,
+                "New Order Received",
+                f"A new order has been placed for {medicine.name}.",
+                "order"
+            )
+
+            medicine.stock -= item.quantity
+            medicine.save()
+
+        items.delete()
+
+        return Response({
+            "message":
+            "Checkout completed",
+
+            "order_ids":
+            order_ids
+        })
 
 
 

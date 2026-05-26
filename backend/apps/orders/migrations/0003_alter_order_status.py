@@ -1,0 +1,28 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("orders", "0002_cart_cartitem"),
+    ]
+
+    operations = [
+        migrations.AlterField(
+            model_name="order",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("confirmed", "Confirmed"),
+                    ("processing", "Processing"),
+                    ("shipped", "Shipped"),
+                    ("out_for_delivery", "Out for Delivery"),
+                    ("delivered", "Delivered"),
+                    ("cancelled", "Cancelled"),
+                ],
+                default="pending",
+                max_length=20,
+            ),
+        ),
+    ]

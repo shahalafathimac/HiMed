@@ -23,8 +23,10 @@ export default function SupplierOrders() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'pending': return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
-      case 'confirmed': return <Badge className="bg-blue-100 text-blue-800">Confirmed</Badge>;
+      case 'confirmed':
+      case 'processing': return <Badge className="bg-blue-100 text-blue-800">Processing</Badge>;
       case 'shipped': return <Badge className="bg-indigo-100 text-indigo-800">Shipped</Badge>;
+      case 'out_for_delivery': return <Badge className="bg-purple-100 text-purple-800">Out for Delivery</Badge>;
       case 'delivered': return <Badge className="bg-green-100 text-green-800">Delivered</Badge>;
       case 'cancelled': return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
       default: return <Badge variant="outline">{status}</Badge>;
@@ -76,8 +78,9 @@ export default function SupplierOrders() {
                       onChange={(e) => updateMutation.mutate({ id: order.id, status: e.target.value })}
                     >
                       <option value="pending">Pending</option>
-                      <option value="confirmed">Confirmed</option>
+                      <option value="processing">Processing</option>
                       <option value="shipped">Shipped</option>
+                      <option value="out_for_delivery">Out for Delivery</option>
                       <option value="delivered">Delivered</option>
                     </select>
                   </TableCell>
