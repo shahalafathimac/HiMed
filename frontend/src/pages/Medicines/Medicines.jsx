@@ -51,7 +51,7 @@ function Medicines() {
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <Input
             className="h-11 pl-10"
-            placeholder="Search medicines..."
+            placeholder="Search medicines or suppliers..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />

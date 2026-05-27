@@ -6,7 +6,8 @@ from .views import (
     UpdateMedicineView,
     DeleteMedicineView,
     low_stock_medicines,
-    medicine_analytics
+    medicine_analytics,
+    supplier_directory
 )
 
 urlpatterns = [
@@ -39,6 +40,11 @@ urlpatterns = [
     path(
         "analytics/",
         medicine_analytics
+    ),
+
+    path(
+        "suppliers/",
+        supplier_directory
     ),
 
 ]

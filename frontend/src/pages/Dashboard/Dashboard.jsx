@@ -30,6 +30,7 @@ import {
   Pill,
   ShoppingCart,
   DollarSign,
+  IndianRupee,
   Activity,
   AlertTriangle,
   Truck,
@@ -201,7 +202,7 @@ export default function Dashboard() {
             <StatCard
               title="Revenue"
               value={formatCurrency(dashboardInfo?.stats?.revenue)}
-              icon={DollarSign}
+              icon={IndianRupee}
               trend="+12% from last month"
             />
           </>

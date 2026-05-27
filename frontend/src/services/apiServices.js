@@ -36,6 +36,10 @@ export const fetchMedicineAnalytics = () => {
   return api.get("/medicines/analytics/");
 };
 
+export const fetchSupplierDirectory = () => {
+  return api.get("/medicines/suppliers/");
+};
+
 // Orders
 export const placeOrder = (data) => {
   return api.post("/orders/place/", data);

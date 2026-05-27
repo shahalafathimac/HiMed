@@ -29,6 +29,8 @@ import SupplierOrders from "./pages/Supplier/SupplierOrders";
 
 import Cart from "./pages/Buyer/Cart";
 import OrderHistory from "./pages/Buyer/OrderHistory";
+import BuyerSuppliers from "./pages/Buyer/BuyerSuppliers";
+import BuyerPlaceholder from "./pages/Buyer/BuyerPlaceholder";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +86,13 @@ function App() {
             <Route path="/buyer/medicines/:id" element={<RoleRoute role="buyer"><MedicineDetails /></RoleRoute>} />
             <Route path="/buyer/cart" element={<RoleRoute role="buyer"><Cart /></RoleRoute>} />
             <Route path="/buyer/orders" element={<RoleRoute role="buyer"><OrderHistory /></RoleRoute>} />
+            <Route path="/buyer/deliveries" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Track Deliveries" description="Track pending, processing, shipped, and out for delivery orders from your order history." /></RoleRoute>} />
+            <Route path="/buyer/suppliers" element={<RoleRoute role="buyer"><BuyerSuppliers /></RoleRoute>} />
+            <Route path="/buyer/invoices" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Invoices" description="Invoices for completed purchases will appear here." /></RoleRoute>} />
+            <Route path="/buyer/wishlist" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Wishlist" description="Save medicines you want to order later." /></RoleRoute>} />
+            <Route path="/buyer/notifications" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Notifications" description="Review order, delivery, and account notifications." /></RoleRoute>} />
+            <Route path="/buyer/profile" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Profile" description="Manage your buyer profile details." /></RoleRoute>} />
+            <Route path="/buyer/settings" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Settings" description="Manage buyer preferences and dashboard settings." /></RoleRoute>} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" />} />
