@@ -6,14 +6,15 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer
-from .email_utils import (
-    send_registration_email_to_user,
-    send_registration_email_to_admin,
-)
 from .models import User
 from .permissions import IsSupplier, IsBuyer, IsAdmin
 from .mfa_utils import generate_qr_code, verify_totp
 from apps.notifications.services import create_notification
+from .email_utils import (
+    send_registration_email_to_user,
+    send_registration_email_to_admin,
+    send_approval_email_to_user,  
+)
 
 
 class RegisterView(APIView):
@@ -56,7 +57,6 @@ def login_view(request):
     if user is None:
         return Response({"message": "Invalid credentials"}, status=401)
 
-   
     if not user.is_approved:
         return Response(
             {"message": "Your account is pending admin approval."},
@@ -76,6 +76,14 @@ def login_view(request):
         "message": "Login successful",
         "access_token": str(refresh.access_token),
         "refresh_token": str(refresh),
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "phone_number": user.phone_number,
+            "is_mfa_enabled": user.is_mfa_enabled,  # ✅ added
+        }
     })
 
 @api_view(["POST"])
@@ -109,7 +117,6 @@ def verify_login_mfa(request):
     except (User.DoesNotExist, ValueError):
         return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
-
     if not user.is_approved:
         return Response(
             {"message": "Your account is pending admin approval."},
@@ -126,6 +133,14 @@ def verify_login_mfa(request):
         "message": "Login Successful",
         "access_token": str(refresh.access_token),
         "refresh_token": str(refresh),
+        # ✅ Add this too
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "role": user.role,
+            "phone_number": user.phone_number,
+        }
     })
 
 
@@ -169,9 +184,21 @@ def approve_user(request, user_id):
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
         return Response({"message": "User not found"}, status=404)
+
     user.is_approved = True
     user.save()
-    create_notification(user, "Account Approved", "Your account has been approved by the admin.", "approval")
+
+    
+    create_notification(
+        user,
+        "Account Approved",
+        "Your account has been approved by the admin.",
+        "approval"
+    )
+
+    
+    send_approval_email_to_user(user)
+
     return Response({"message": "User approved successfully"})
 
 
@@ -184,4 +211,28 @@ def reject_user(request, user_id):
         return Response({"message": "User not found"}, status=404)
     user.delete()
     return Response({"message": "User rejected successfully"})
+
+
+
+class AllUsersView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsAdmin
+    ]
+
+    def get(self, request):
+        users = User.objects.filter(
+            role__in=["buyer", "supplier"],
+            is_approved=True
+        )
+        data = [{
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "role": u.role,
+            "phone_number": u.phone_number,
+            "is_approved": u.is_approved,
+        } for u in users]
+        return Response(data)
 

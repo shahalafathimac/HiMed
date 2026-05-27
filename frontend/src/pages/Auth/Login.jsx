@@ -41,22 +41,35 @@ export default function Login() {
       const response = await loginUser(data);
       const resData = response.data;
 
+      // MFA verification required (already enabled)
       if (resData.mfa_required) {
         setMfaRequired(resData.user_id);
         navigate("/verify-mfa", { replace: true });
         return;
       }
 
+      // Save full user with role
       setAuth(
         {
-          username: data.email.split("@")[0],
-          email: data.email,
+          id: resData.user?.id,
+          username: resData.user?.username,
+          email: resData.user?.email,
+          role: resData.user?.role,
+          phone_number: resData.user?.phone_number,
         },
         resData.access_token,
         resData.refresh_token
       );
 
-      navigate("/setup-mfa", { replace: true });
+      // ✅ If MFA not set up yet → show QR code setup
+      if (!resData.user?.is_mfa_enabled) {
+        navigate("/setup-mfa", { replace: true });
+        return;
+      }
+
+      // ✅ MFA already set up → go to dashboard
+      navigate("/dashboard", { replace: true });
+
     } catch (err) {
       setApiError(
         err.response?.data?.message ||

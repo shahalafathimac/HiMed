@@ -165,5 +165,9 @@ export const verifyLoginMFA = (data) => {
   return api.post("/accounts/verify-login-mfa/", data);
 };
 
+export const fetchAllUsers = () => {
+  return api.get("/accounts/all-users/");
+};
+
 // Aliases
 export const fetchBuyerOrders = fetchOrderHistory;

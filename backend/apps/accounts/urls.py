@@ -10,6 +10,7 @@ from .views import (
     pending_users,
     approve_user,
     reject_user,
+    AllUsersView,
 )
 
 urlpatterns = [
@@ -23,4 +24,5 @@ urlpatterns = [
     path("pending-users/", pending_users),
     path("approve-user/<int:user_id>/", approve_user),
     path("reject-user/<int:user_id>/", reject_user),
+    path("all-users/", AllUsersView.as_view(), name="all-users"),
 ]

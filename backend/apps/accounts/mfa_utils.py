@@ -28,4 +28,4 @@ def verify_totp(secret, otp):
         return False
 
     totp = pyotp.TOTP(secret)
-    return totp.verify(otp)
+    return totp.verify(otp, valid_window=1)

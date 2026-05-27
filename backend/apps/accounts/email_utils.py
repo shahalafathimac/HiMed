@@ -1,67 +1,89 @@
 from django.core.mail import send_mail
-
 from django.conf import settings
 
 
 def send_registration_email_to_user(user):
 
-    subject = "Welcome to Himed"
+    subject = "[HiMed] Registration Received - Pending Approval"  # ✅ changed
 
     message = f"""
-
 Hello {user.username},
 
-Your Himed account has been created successfully.
+Thank you for registering on HiMed!
 
-Your account is currently pending admin approval.
+Your account has been created and is currently PENDING admin approval.
+You will receive a separate email once your account is approved.
 
-You will be notified once approved.
+Please do NOT try to login until you receive the approval email.
 
-Thank you,
-Himed Team
+Best Regards,
+HiMed Team
 """
 
     send_mail(
-
         subject,
-
         message,
-
         settings.EMAIL_HOST_USER,
-
         [user.email],
-
         fail_silently=False
     )
 
 
 def send_registration_email_to_admin(user):
 
-    subject = "New User Registration"
+    subject = "[HiMed Admin] New User Pending Approval"  # ✅ changed
 
     message = f"""
-
-A new user has registered.
+A new user has registered on HiMed and is awaiting approval.
 
 Username: {user.username}
-
 Email: {user.email}
-
 Role: {user.role}
+Phone: {user.phone_number}
 
-Please review and approve the account.
+Please login to admin dashboard to approve or reject.
+Dashboard: http://localhost:5173/login
 
+HiMed System
 """
 
     send_mail(
-
         subject,
-
         message,
-
         settings.EMAIL_HOST_USER,
-
         [settings.EMAIL_HOST_USER],
+        fail_silently=False
+    )
 
+
+def send_approval_email_to_user(user):
+
+    subject = "[HiMed] Your Account is Approved - Login Now!"  # ✅ changed
+
+    message = f"""
+Hello {user.username},
+
+Congratulations! Your HiMed account has been APPROVED
+by the administrator.
+
+You can now login and access your dashboard.
+
+Account Details:
+- Username: {user.username}
+- Email: {user.email}
+- Role: {user.role.capitalize()}
+
+
+Welcome aboard!
+
+Best Regards,
+HiMed Team
+"""
+
+    send_mail(
+        subject,
+        message,
+        settings.EMAIL_HOST_USER,
+        [user.email],
         fail_silently=False
     )
