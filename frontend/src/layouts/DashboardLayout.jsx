@@ -91,9 +91,7 @@ export default function DashboardLayout() {
         { name: "Suppliers", href: "/buyer/suppliers", icon: Store },
         { name: "Invoices", href: "/buyer/invoices", icon: FileText },
         { name: "Wishlist", href: "/buyer/wishlist", icon: Heart },
-        { name: "Notifications", href: "/buyer/notifications", icon: Bell },
-        { name: "Profile", href: "/buyer/profile", icon: User },
-        { name: "Settings", href: "/buyer/settings", icon: Settings },
+        
       ];
     }
     return [];

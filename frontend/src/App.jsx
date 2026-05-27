@@ -31,6 +31,8 @@ import Cart from "./pages/Buyer/Cart";
 import OrderHistory from "./pages/Buyer/OrderHistory";
 import BuyerSuppliers from "./pages/Buyer/BuyerSuppliers";
 import BuyerPlaceholder from "./pages/Buyer/BuyerPlaceholder";
+import SupplierMedicines from "./pages/Buyer/SupplierMedicines";
+import BuyerProfile from "./pages/Buyer/BuyerProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -91,8 +93,9 @@ function App() {
             <Route path="/buyer/invoices" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Invoices" description="Invoices for completed purchases will appear here." /></RoleRoute>} />
             <Route path="/buyer/wishlist" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Wishlist" description="Save medicines you want to order later." /></RoleRoute>} />
             <Route path="/buyer/notifications" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Notifications" description="Review order, delivery, and account notifications." /></RoleRoute>} />
-            <Route path="/buyer/profile" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Profile" description="Manage your buyer profile details." /></RoleRoute>} />
+            <Route path="/buyer/profile" element={<RoleRoute role="buyer"><BuyerProfile /></RoleRoute>} />
             <Route path="/buyer/settings" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Settings" description="Manage buyer preferences and dashboard settings." /></RoleRoute>} />
+            <Route path="/buyer/suppliers/:supplierId/medicines" element={<RoleRoute role="buyer"><SupplierMedicines /></RoleRoute>}/>
           </Route>
 
           <Route path="*" element={<Navigate to="/" />} />

@@ -112,7 +112,7 @@ export default function BuyerSuppliers() {
               </div>
 
               <Button asChild className="w-full">
-                <Link to="/buyer/medicines">
+                <Link to={`/buyer/suppliers/${supplier.id}/medicines`}>
                   <PackageCheck className="mr-2 h-4 w-4" />
                   View Medicines
                 </Link>
