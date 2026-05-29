@@ -1,3 +1,4 @@
+# apps/accounts/views.py
 from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -10,10 +11,10 @@ from .models import User
 from .permissions import IsSupplier, IsBuyer, IsAdmin
 from .mfa_utils import generate_qr_code, verify_totp
 from apps.notifications.services import create_notification
-from .email_utils import (
-    send_registration_email_to_user,
-    send_registration_email_to_admin,
-    send_approval_email_to_user,  
+from .tasks import (
+    task_send_registration_email_to_user,
+    task_send_registration_email_to_admin,
+    task_send_approval_email_to_user,
 )
 
 
@@ -22,8 +23,11 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            send_registration_email_to_user(user)
-            send_registration_email_to_admin(user)
+
+            # ✅ Celery: runs in background, user gets response immediately
+            task_send_registration_email_to_user.delay(user.id)
+            task_send_registration_email_to_admin.delay(user.id)
+
             return Response({"message": "User registered successfully"})
         return Response(serializer.errors)
 
@@ -82,9 +86,10 @@ def login_view(request):
             "email": user.email,
             "role": user.role,
             "phone_number": user.phone_number,
-            "is_mfa_enabled": user.is_mfa_enabled,  # ✅ added
+            "is_mfa_enabled": user.is_mfa_enabled,
         }
     })
+
 
 @api_view(["POST"])
 def refresh_token_view(request):
@@ -133,7 +138,6 @@ def verify_login_mfa(request):
         "message": "Login Successful",
         "access_token": str(refresh.access_token),
         "refresh_token": str(refresh),
-        # ✅ Add this too
         "user": {
             "id": user.id,
             "username": user.username,
@@ -188,7 +192,6 @@ def approve_user(request, user_id):
     user.is_approved = True
     user.save()
 
-    
     create_notification(
         user,
         "Account Approved",
@@ -196,8 +199,8 @@ def approve_user(request, user_id):
         "approval"
     )
 
-    
-    send_approval_email_to_user(user)
+    # ✅ Celery: approval email runs in background
+    task_send_approval_email_to_user.delay(user.id)
 
     return Response({"message": "User approved successfully"})
 
@@ -213,13 +216,8 @@ def reject_user(request, user_id):
     return Response({"message": "User rejected successfully"})
 
 
-
 class AllUsersView(APIView):
-
-    permission_classes = [
-        IsAuthenticated,
-        IsAdmin
-    ]
+    permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
         users = User.objects.filter(
@@ -235,4 +233,3 @@ class AllUsersView(APIView):
             "is_approved": u.is_approved,
         } for u in users]
         return Response(data)
-
