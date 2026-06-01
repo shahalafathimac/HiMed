@@ -159,12 +159,30 @@ CSRF_TRUSTED_ORIGINS = [
 
 
 # Celery Configuration
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = ("sqs://")
+CELERY_RESULT_BACKEND = None
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Asia/Kolkata'  # Your timezone
+CELERY_TIMEZONE = 'Asia/Kolkata' 
+CELERY_TASK_DEFAULT_QUEUE = config("SQS_QUEUE_NAME")
+
 
 # Celery Beat (for scheduled tasks)
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "region": "ap-south-1",
+    "visibility_timeout": 3600,
+}
+
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "region": config("AWS_REGION"),
+    "visibility_timeout": 3600,
+    "predefined_queues": {
+        config("SQS_QUEUE_NAME"): {
+            "url": config("SQS_QUEUE_URL"),
+            "access_key_id": config("AWS_ACCESS_KEY_ID"),
+            "secret_access_key": config("AWS_SECRET_ACCESS_KEY"),
+        }
+    }
+}
