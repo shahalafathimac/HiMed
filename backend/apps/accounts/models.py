@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractUser
 import pyotp
 
 
-class User(AbstractUser):
+class Account(AbstractUser):
 
     ROLE_CHOICES = (
         ('supplier', 'Supplier'),
@@ -36,6 +36,9 @@ class User(AbstractUser):
     is_mfa_enabled = models.BooleanField(
         default=False
     )
+
+    class Meta:
+        db_table = "accounts_user"
 
     def generate_mfa_secret(self):
 

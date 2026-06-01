@@ -1,21 +1,16 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Heart, ImagePlus, Search } from "lucide-react";
+import { ImagePlus, Search } from "lucide-react";
 import { fetchMedicinesList } from "../../services/apiServices";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Badge } from "../../components/ui/badge";
-import { Button } from "../../components/ui/button";
-import useWishlist from "../../hooks/useWishlist";
 
-function Medicines() {
-  const navigate = useNavigate();
+export default function AdminMedicines() {
   const [search, setSearch] = useState("");
-  const { isWishlisted, toggleWishlist } = useWishlist();
 
   const { data: medicines = [], isLoading } = useQuery({
-    queryKey: ["buyerMedicines"],
+    queryKey: ["adminMedicines"],
     queryFn: async () => {
       const res = await fetchMedicinesList();
       return res.data;
@@ -44,9 +39,9 @@ function Medicines() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Browse Medicines</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Medicines</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Medicines uploaded by verified suppliers.
+            Review medicines uploaded by suppliers.
           </p>
         </div>
 
@@ -74,14 +69,9 @@ function Medicines() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
         {!isLoading && filteredMedicines.map((medicine) => {
           const outOfStock = medicine.stock < 1;
-          const wished = isWishlisted(medicine.id);
 
           return (
-            <Card
-              key={medicine.id}
-              className="flex h-full cursor-pointer flex-col overflow-hidden transition-shadow hover:shadow-md"
-              onClick={() => navigate(`/buyer/medicines/${medicine.id}`)}
-            >
+            <Card key={medicine.id} className="flex h-full flex-col overflow-hidden">
               <div className="relative h-52 w-full bg-slate-100">
                 {medicine.image_url ? (
                   <img
@@ -94,21 +84,6 @@ function Medicines() {
                     <ImagePlus className="h-10 w-10" />
                   </div>
                 )}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className={`absolute left-4 top-4 rounded-full bg-white/90 shadow-sm hover:bg-white ${
-                    wished ? "text-red-500 hover:text-red-600" : "text-slate-500 hover:text-red-500"
-                  }`}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    toggleWishlist(medicine);
-                  }}
-                  title={wished ? "Remove from wishlist" : "Add to wishlist"}
-                >
-                  <Heart className={`h-5 w-5 ${wished ? "fill-current" : ""}`} />
-                </Button>
                 <Badge className="absolute right-4 top-4" variant={outOfStock ? "destructive" : "secondary"}>
                   {outOfStock ? "Out of stock" : `${medicine.stock} in stock`}
                 </Badge>
@@ -120,9 +95,12 @@ function Medicines() {
                 </CardTitle>
               </CardHeader>
 
-              <CardContent>
-                <p className="mb-2 text-2xl font-bold text-primary">{formatPrice(medicine.price)}</p>
-                <p className="mb-2 text-xs text-slate-500">Expires {medicine.expiry_date}</p>
+              <CardContent className="space-y-2">
+                <p className="text-2xl font-bold text-primary">{formatPrice(medicine.price)}</p>
+                {medicine.supplier_name && (
+                  <p className="text-sm text-slate-500">Supplier: {medicine.supplier_name}</p>
+                )}
+                <p className="text-xs text-slate-500">Expires {medicine.expiry_date}</p>
               </CardContent>
             </Card>
           );
@@ -131,5 +109,3 @@ function Medicines() {
     </div>
   );
 }
-
-export default Medicines;

@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'apps.notifications',
     'corsheaders',
     'django_celery_beat',
+    'django_celery_results',
 ]
 
 MIDDLEWARE = [
@@ -126,7 +127,7 @@ STATIC_URL = 'static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-AUTH_USER_MODEL = 'accounts.User'
+AUTH_USER_MODEL = 'accounts.Account'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
@@ -138,7 +139,13 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', cast=bool)
+EMAIL_USE_SSL = config('EMAIL_USE_SSL', default=False, cast=bool)
+EMAIL_TIMEOUT = config('EMAIL_TIMEOUT', default=20, cast=int)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
+ADMIN_EMAIL = config('ADMIN_EMAIL', default=EMAIL_HOST_USER)
 FAST2SMS_API_KEY = config('FAST2SMS_API_KEY')
+FAST2SMS_ROUTE = config('FAST2SMS_ROUTE', default='q')
+FAST2SMS_TIMEOUT = config('FAST2SMS_TIMEOUT', default=20, cast=int)
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -160,12 +167,17 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Celery Configuration
 CELERY_BROKER_URL = ("sqs://")
-CELERY_RESULT_BACKEND = None
+CELERY_RESULT_BACKEND = 'django-db'
+CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata' 
 CELERY_TASK_DEFAULT_QUEUE = config("SQS_QUEUE_NAME")
+CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=True, cast=bool)
+CELERY_TASK_EAGER_PROPAGATES = config("CELERY_TASK_EAGER_PROPAGATES", default=True, cast=bool)
+CELERY_TASK_ALWAYS_EAGER = True
+
 
 
 # Celery Beat (for scheduled tasks)

@@ -23,6 +23,7 @@ import MedicineDetails from "./pages/Medicines/MedicineDetails";
 import PendingUsers from "./pages/Admin/PendingUsers";
 import AdminOrders from "./pages/Admin/AdminOrders";
 import ContactMessages from "./pages/Admin/ContactMessages";
+import AdminMedicines from "./pages/Admin/AdminMedicines";
 
 import MyMedicines from "./pages/Supplier/MyMedicines";
 import SupplierOrders from "./pages/Supplier/SupplierOrders";
@@ -32,7 +33,7 @@ import OrderHistory from "./pages/Buyer/OrderHistory";
 import BuyerSuppliers from "./pages/Buyer/BuyerSuppliers";
 import BuyerPlaceholder from "./pages/Buyer/BuyerPlaceholder";
 import SupplierMedicines from "./pages/Buyer/SupplierMedicines";
-import BuyerProfile from "./pages/Buyer/BuyerProfile";
+import Wishlist from "./pages/Buyer/Wishlist";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +81,7 @@ function App() {
           }>
             <Route path="/dashboard" element={<ProtectedRoutes><Dashboard /></ProtectedRoutes>} />
             <Route path="/admin/pending-users" element={<RoleRoute role="admin"><PendingUsers /></RoleRoute>} />
+            <Route path="/admin/medicines" element={<RoleRoute role="admin"><AdminMedicines /></RoleRoute>} />
             <Route path="/admin/orders" element={<RoleRoute role="admin"><AdminOrders /></RoleRoute>} />
             <Route path="/admin/messages" element={<RoleRoute role="admin"><ContactMessages /></RoleRoute>} />
             <Route path="/supplier/medicines" element={<RoleRoute role="supplier"><MyMedicines /></RoleRoute>} />
@@ -91,9 +93,9 @@ function App() {
             <Route path="/buyer/deliveries" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Track Deliveries" description="Track pending, processing, shipped, and out for delivery orders from your order history." /></RoleRoute>} />
             <Route path="/buyer/suppliers" element={<RoleRoute role="buyer"><BuyerSuppliers /></RoleRoute>} />
             <Route path="/buyer/invoices" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Invoices" description="Invoices for completed purchases will appear here." /></RoleRoute>} />
-            <Route path="/buyer/wishlist" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Wishlist" description="Save medicines you want to order later." /></RoleRoute>} />
+            <Route path="/buyer/wishlist" element={<RoleRoute role="buyer"><Wishlist /></RoleRoute>} />
             <Route path="/buyer/notifications" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Notifications" description="Review order, delivery, and account notifications." /></RoleRoute>} />
-            <Route path="/buyer/profile" element={<RoleRoute role="buyer"><BuyerProfile /></RoleRoute>} />
+            <Route path="/buyer/profile" element={<RoleRoute role="buyer"><Navigate to="/dashboard" /></RoleRoute>} />
             <Route path="/buyer/settings" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Settings" description="Manage buyer preferences and dashboard settings." /></RoleRoute>} />
             <Route path="/buyer/suppliers/:supplierId/medicines" element={<RoleRoute role="buyer"><SupplierMedicines /></RoleRoute>}/>
           </Route>

@@ -6,19 +6,40 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Badge } from "../../components/ui/badge";
+import { updateProfile } from "../../services/authservice";
 
 export default function BuyerProfile() {
   const { user, updateUser } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({
     username: user?.username || "",
     email: user?.email || "",
     phone_number: user?.phone_number || "",
   });
 
-  const handleSave = () => {
-    updateUser(form);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      setError("");
+      const response = await updateProfile(form);
+      updateUser(response.data);
+      setForm({
+        username: response.data.username || "",
+        email: response.data.email || "",
+        phone_number: response.data.phone_number || "",
+      });
+      setIsEditing(false);
+    } catch (err) {
+      const data = err.response?.data;
+      const firstError = data && typeof data === "object"
+        ? Object.values(data).flat().join(" ")
+        : null;
+      setError(firstError || "Failed to update profile.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -65,10 +86,10 @@ export default function BuyerProfile() {
             </Button>
           ) : (
             <div className="flex gap-2">
-              <Button size="sm" onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" /> Save
+              <Button size="sm" onClick={handleSave} disabled={isSaving}>
+                <Save className="mr-2 h-4 w-4" /> {isSaving ? "Saving..." : "Save"}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleCancel}>
+              <Button variant="outline" size="sm" onClick={handleCancel} disabled={isSaving}>
                 <X className="mr-2 h-4 w-4" /> Cancel
               </Button>
             </div>
@@ -76,6 +97,12 @@ export default function BuyerProfile() {
         </CardHeader>
 
         <CardContent className="space-y-5">
+          {error && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           {/* Username */}
           <div className="space-y-1.5">
             <Label className="flex items-center gap-2 text-slate-500">

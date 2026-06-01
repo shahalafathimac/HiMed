@@ -7,7 +7,7 @@ from .models import Order, Cart, CartItem
 from .serializers import OrderSerializer, CartSerializer
 from apps.medicines.models import Medicine
 from apps.notifications.services import create_notification
-from apps.accounts.sms import send_order_sms
+from apps.orders.tasks import task_send_order_sms  # ✅ removed send_order_sms import
 
 
 class PlaceOrderView(APIView):
@@ -53,8 +53,8 @@ class PlaceOrderView(APIView):
             "order"
         )
 
-        # ✅ SMS to buyer with name
-        send_order_sms(
+        # ✅ Celery background SMS
+        task_send_order_sms.delay(
             request.user.phone_number,
             "pending",
             order.id,
@@ -122,8 +122,8 @@ class CancelOrderView(APIView):
         order.status = "cancelled"
         order.save()
 
-        # ✅ SMS to buyer on cancellation with name
-        send_order_sms(
+        # ✅ Celery background SMS
+        task_send_order_sms.delay(
             request.user.phone_number,
             "cancelled",
             order.id,
@@ -170,8 +170,8 @@ class UpdateOrderStatusView(APIView):
         order.status = status_value
         order.save()
 
-        # ✅ SMS to buyer on every status change with name
-        send_order_sms(
+        # ✅ Celery background SMS
+        task_send_order_sms.delay(
             order.buyer.phone_number,
             status_value,
             order.id,
@@ -401,8 +401,8 @@ class CheckoutCartView(APIView):
                 "order"
             )
 
-            # ✅ SMS for each item in cart checkout with name
-            send_order_sms(
+            # ✅ Celery background SMS
+            task_send_order_sms.delay(
                 request.user.phone_number,
                 "pending",
                 order.id,

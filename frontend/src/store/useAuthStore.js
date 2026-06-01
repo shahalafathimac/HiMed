@@ -46,9 +46,11 @@ const useAuthStore = create((set) => ({
   },
 
   updateUser: (userData) =>
-    set((state) => ({
-      user: { ...state.user, ...userData },
-    })),
+    set((state) => {
+      const user = { ...state.user, ...userData };
+      setCookie("user", JSON.stringify(user));
+      return { user };
+    }),
 }));
 
 export default useAuthStore;

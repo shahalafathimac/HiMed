@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer
-from .models import User
+from .models import Account
 from .permissions import IsSupplier, IsBuyer, IsAdmin
 from .mfa_utils import generate_qr_code, verify_totp
 from apps.notifications.services import create_notification
@@ -52,8 +52,8 @@ def login_view(request):
     password = request.data.get("password")
 
     try:
-        db_user = User.objects.get(email=email)
-    except User.DoesNotExist:
+        db_user = Account.objects.get(email=email)
+    except Account.DoesNotExist:
         return Response({"message": "User not found"}, status=404)
 
     user = authenticate(username=db_user.username, password=password)
@@ -118,8 +118,8 @@ def verify_login_mfa(request):
         return Response({"message": "OTP missing"}, status=status.HTTP_400_BAD_REQUEST)
 
     try:
-        user = User.objects.get(id=int(user_id))
-    except (User.DoesNotExist, ValueError):
+        user = Account.objects.get(id=int(user_id))
+    except (Account.DoesNotExist, ValueError):
         return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
     if not user.is_approved:
@@ -158,19 +158,48 @@ class SetupMFAView(APIView):
         return Response({"qr_code": generate_qr_code(user)})
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH"])
 @permission_classes([IsAuthenticated])
 def profile_view(request):
+    user = request.user
+
+    if request.method == "PATCH":
+        username = str(request.data.get("username", user.username) or "").strip()
+        email = str(request.data.get("email", user.email) or "").strip()
+        phone_number = str(request.data.get("phone_number", user.phone_number) or "").strip()
+
+        if not username:
+            return Response({"username": ["Username is required."]}, status=status.HTTP_400_BAD_REQUEST)
+        if not email:
+            return Response({"email": ["Email is required."]}, status=status.HTTP_400_BAD_REQUEST)
+        if not phone_number:
+            return Response({"phone_number": ["Phone number is required."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        if Account.objects.exclude(id=user.id).filter(username=username).exists():
+            return Response({"username": ["Username already exists."]}, status=status.HTTP_400_BAD_REQUEST)
+        if Account.objects.exclude(id=user.id).filter(email=email).exists():
+            return Response({"email": ["Email already exists."]}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.username = username
+        user.email = email
+        user.phone_number = phone_number
+        user.save(update_fields=["username", "email", "phone_number"])
+
     return Response({
-        "message": "Profile accessed",
-        "email": request.user.email,
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "phone_number": user.phone_number,
+        "is_mfa_enabled": user.is_mfa_enabled,
+        "is_approved": user.is_approved,
     })
 
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdmin])
 def pending_users(request):
-    users = User.objects.filter(is_approved=False)
+    users = Account.objects.filter(is_approved=False)
     data = [{
         "id": u.id,
         "username": u.username,
@@ -185,8 +214,8 @@ def pending_users(request):
 @permission_classes([IsAuthenticated, IsAdmin])
 def approve_user(request, user_id):
     try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
+        user = Account.objects.get(id=user_id)
+    except Account.DoesNotExist:
         return Response({"message": "User not found"}, status=404)
 
     user.is_approved = True
@@ -209,8 +238,8 @@ def approve_user(request, user_id):
 @permission_classes([IsAuthenticated, IsAdmin])
 def reject_user(request, user_id):
     try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
+        user = Account.objects.get(id=user_id)
+    except Account.DoesNotExist:
         return Response({"message": "User not found"}, status=404)
     user.delete()
     return Response({"message": "User rejected successfully"})
@@ -220,7 +249,7 @@ class AllUsersView(APIView):
     permission_classes = [IsAuthenticated, IsAdmin]
 
     def get(self, request):
-        users = User.objects.filter(
+        users = Account.objects.filter(
             role__in=["buyer", "supplier"],
             is_approved=True
         )

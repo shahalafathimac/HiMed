@@ -14,7 +14,7 @@ from apps.orders.models import Order
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
 
-User = get_user_model()
+Account = get_user_model()
 
 # Create your views here.
 class CreateMedicineView(APIView):
@@ -296,7 +296,7 @@ def medicine_analytics(request):
 @permission_classes([IsAuthenticated])
 def supplier_directory(request):
 
-    suppliers = User.objects.filter(
+    suppliers = Account.objects.filter(
         role="supplier"
     ).order_by(
         "username"

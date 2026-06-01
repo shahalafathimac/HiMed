@@ -1,11 +1,11 @@
 from django.db import models
-from apps.accounts.models import User
+from apps.accounts.models import Account
 
 
 class Medicine(models.Model):
 
     supplier = models.ForeignKey(
-        User,
+        Account,
         on_delete=models.CASCADE,
         related_name="medicines"
     )

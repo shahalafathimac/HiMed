@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchPendingUsers, approveUser, rejectUser, fetchDashboardData } from "../../services/apiServices";
-import Navbar from "../../components/Navbar/Navbar";
 
 function Admin() {
   const navigate = useNavigate();
@@ -66,7 +65,6 @@ function Admin() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
           <div>
@@ -74,13 +72,13 @@ function Admin() {
             <p className="text-gray-500">Manage users and oversee platform operations.</p>
           </div>
           <div className="mt-4 md:mt-0 flex space-x-4">
-            <Link to="/medicines" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-medium transition-colors">
+            <Link to="/admin/medicines" className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 px-4 py-2 rounded-lg font-medium transition-colors">
               All Medicines
             </Link>
-            <Link to="/orders" className="bg-teal-100 text-teal-700 hover:bg-teal-200 px-4 py-2 rounded-lg font-medium transition-colors">
+            <Link to="/admin/orders" className="bg-teal-100 text-teal-700 hover:bg-teal-200 px-4 py-2 rounded-lg font-medium transition-colors">
               All Orders
             </Link>
-            <Link to="/contact" className="bg-orange-100 text-orange-700 hover:bg-orange-200 px-4 py-2 rounded-lg font-medium transition-colors">
+            <Link to="/admin/messages" className="bg-orange-100 text-orange-700 hover:bg-orange-200 px-4 py-2 rounded-lg font-medium transition-colors">
               Messages
             </Link>
           </div>

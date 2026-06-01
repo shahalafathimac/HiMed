@@ -1,5 +1,5 @@
 from django.db import models
-from apps.accounts.models import User
+from apps.accounts.models import Account
 from apps.medicines.models import Medicine
 
 # Create your models here.
@@ -19,7 +19,7 @@ class Order(models.Model):
     ]
 
     buyer = models.ForeignKey(
-        User,
+        Account,
         on_delete=models.CASCADE,
         related_name="buyer_orders"
     )
@@ -53,7 +53,7 @@ class Order(models.Model):
 class Cart(models.Model):
 
     buyer = models.OneToOneField(
-        User,
+        Account,
         on_delete=models.CASCADE,
         related_name="cart"
     )

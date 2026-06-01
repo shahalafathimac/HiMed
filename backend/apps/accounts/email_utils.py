@@ -2,6 +2,16 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 
+def send_himed_mail(subject, message, recipients):
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        recipients,
+        fail_silently=False
+    )
+
+
 def send_registration_email_to_user(user):
 
     subject = "[HiMed] Registration Received - Pending Approval"  # ✅ changed
@@ -20,12 +30,10 @@ Best Regards,
 HiMed Team
 """
 
-    send_mail(
+    send_himed_mail(
         subject,
         message,
-        settings.EMAIL_HOST_USER,
-        [user.email],
-        fail_silently=False
+        [user.email]
     )
 
 
@@ -47,12 +55,10 @@ Dashboard: http://localhost:5173/login
 HiMed System
 """
 
-    send_mail(
+    send_himed_mail(
         subject,
         message,
-        settings.EMAIL_HOST_USER,
-        [settings.EMAIL_HOST_USER],
-        fail_silently=False
+        [settings.ADMIN_EMAIL]
     )
 
 
@@ -80,10 +86,8 @@ Best Regards,
 HiMed Team
 """
 
-    send_mail(
+    send_himed_mail(
         subject,
         message,
-        settings.EMAIL_HOST_USER,
-        [user.email],
-        fail_silently=False
+        [user.email]
     )
