@@ -22,12 +22,15 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         role = validated_data["role"]
+        is_admin = role == "admin"
         user = Account.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
             role=role,
             phone_number=validated_data["phone_number"],
+            is_approved=is_admin,
+            is_staff=is_admin,
         )
 
         group, _ = Group.objects.get_or_create(name=role.capitalize())

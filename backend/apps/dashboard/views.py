@@ -1,13 +1,27 @@
-from rest_framework.decorators import api_view
-from rest_framework.decorators import permission_classes
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from django.db.models import Sum
+from django.db.models import Sum, Count
+from django.db.models.functions import TruncMonth
 from django.utils import timezone
+from datetime import timedelta
 
 from apps.medicines.models import Medicine
 from apps.orders.models import Order
+from apps.accounts.models import Account
+from apps.accounts.permissions import IsAdmin
+
+
+def _pct_change(current, previous):
+    if previous > 0:
+        return round(((current - previous) / previous) * 100, 1)
+    return 100.0 if current > 0 else 0.0
+
+
+def _month_range(dt):
+    start = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return start
 
 
 @api_view(["GET"])
@@ -22,7 +36,33 @@ def dashboard_data(request):
         "role": user.role
     }
 
-    if user.role == "admin":
+    if user.is_superuser or user.role == "admin":
+
+        now = timezone.now()
+        cur_start = _month_range(now)
+        prev_start = _month_range(cur_start - timedelta(days=1))
+
+        # Total Users
+        approved_users = Account.objects.filter(is_approved=True, is_superuser=False)
+        total_users = approved_users.count()
+        users_cur = approved_users.filter(date_joined__gte=cur_start).count()
+        users_prev = approved_users.filter(date_joined__gte=prev_start, date_joined__lt=cur_start).count()
+
+        # Total Medicines
+        total_medicines = Medicine.objects.count()
+        med_cur = Medicine.objects.filter(created_at__gte=cur_start).count()
+        med_prev = Medicine.objects.filter(created_at__gte=prev_start, created_at__lt=cur_start).count()
+
+        # Total Orders
+        total_orders = Order.objects.count()
+        ord_cur = Order.objects.filter(created_at__gte=cur_start).count()
+        ord_prev = Order.objects.filter(created_at__gte=prev_start, created_at__lt=cur_start).count()
+
+        # Platform Revenue
+        delivered = Order.objects.filter(status="delivered")
+        platform_revenue = delivered.aggregate(total=Sum("total_price"))["total"] or 0
+        rev_cur = delivered.filter(created_at__gte=cur_start).aggregate(total=Sum("total_price"))["total"] or 0
+        rev_prev = delivered.filter(created_at__gte=prev_start, created_at__lt=cur_start).aggregate(total=Sum("total_price"))["total"] or 0
 
         response["dashboard"] = {
             "pending_users": True,
@@ -32,6 +72,17 @@ def dashboard_data(request):
             "all_orders": True,
             "contact_messages": True,
             "analytics": True
+        }
+
+        response["stats"] = {
+            "total_users": total_users,
+            "total_users_change": _pct_change(users_cur, users_prev),
+            "total_medicines": total_medicines,
+            "total_medicines_change": _pct_change(med_cur, med_prev),
+            "total_orders": total_orders,
+            "total_orders_change": _pct_change(ord_cur, ord_prev),
+            "platform_revenue": float(platform_revenue),
+            "platform_revenue_change": _pct_change(float(rev_cur), float(rev_prev)),
         }
 
     elif user.role == "supplier":
@@ -161,3 +212,39 @@ def dashboard_data(request):
         }
 
     return Response(response)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdmin])
+def revenue_overview(request):
+    year = timezone.now().year
+    monthly = (
+        Order.objects
+        .filter(status="delivered", created_at__year=year)
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(total=Sum("total_price"))
+        .order_by("month")
+    )
+    data = {m["month"].month: float(m["total"]) for m in monthly}
+    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    result = [{"name": m, "total": data.get(i+1, 0)} for i, m in enumerate(months)]
+    return Response(result)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated, IsAdmin])
+def order_trends(request):
+    year = timezone.now().year
+    monthly = (
+        Order.objects
+        .filter(created_at__year=year)
+        .annotate(month=TruncMonth("created_at"))
+        .values("month")
+        .annotate(total=Count("id"))
+        .order_by("month")
+    )
+    data = {m["month"].month: m["total"] for m in monthly}
+    months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    result = [{"name": m, "total": data.get(i+1, 0)} for i, m in enumerate(months)]
+    return Response(result)

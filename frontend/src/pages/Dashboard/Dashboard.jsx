@@ -2,8 +2,9 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   fetchDashboardData,
+  fetchRevenueOverview,
+  fetchOrderTrends,
   fetchLowStockMedicines,
-  fetchMedicineAnalytics,
 } from "../../services/apiServices";
 
 import {
@@ -62,13 +63,26 @@ export default function Dashboard() {
       },
     });
 
-  const { data: medicineAnalytics = {}, isLoading: analyticsLoading } =
+  const isAdmin = dashboardInfo?.role === "admin" || dashboardInfo?.role === "";
+
+  const { data: revenueData = [], isLoading: revenueLoading } =
     useQuery({
-      queryKey: ["medicineAnalytics"],
+      queryKey: ["revenueOverview"],
       queryFn: async () => {
-        const res = await fetchMedicineAnalytics();
+        const res = await fetchRevenueOverview();
         return res.data;
       },
+      enabled: isAdmin,
+    });
+
+  const { data: orderTrendData = [], isLoading: orderTrendLoading } =
+    useQuery({
+      queryKey: ["orderTrends"],
+      queryFn: async () => {
+        const res = await fetchOrderTrends();
+        return res.data;
+      },
+      enabled: isAdmin,
     });
 
   useEffect(() => {
@@ -89,7 +103,8 @@ export default function Dashboard() {
   const isLoading =
     dashboardLoading ||
     lowStockLoading ||
-    analyticsLoading;
+    revenueLoading ||
+    orderTrendLoading;
 
   if (isLoading) {
     return (
@@ -104,16 +119,18 @@ export default function Dashboard() {
     );
   }
 
-  const role = dashboardInfo?.role;
+  const role = dashboardInfo?.role || (dashboardInfo?.dashboard ? "admin" : "");
   const lowStockCount = lowStockMedicines?.length || 0;
   const buyerStats = dashboardInfo?.stats || {};
 
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat("en-IN", {
+  const formatCurrency = (value) => {
+    const val = Number(value || 0);
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
-      maximumFractionDigits: 2,
-    }).format(Number(value || 0));
+      maximumFractionDigits: 0,
+    }).format(val);
+  };
 
   const revenueChartData = role === "buyer"
     ? [
@@ -122,14 +139,7 @@ export default function Dashboard() {
       { name: "Shipped", total: buyerStats.status_counts?.shipped || 0 },
       { name: "Out for Delivery", total: buyerStats.status_counts?.out_for_delivery || 0 },
     ]
-    : medicineAnalytics.monthly_revenue || [
-      { name: "Jan", total: 3200 },
-      { name: "Feb", total: 4100 },
-      { name: "Mar", total: 2800 },
-      { name: "Apr", total: 5300 },
-      { name: "May", total: 4800 },
-      { name: "Jun", total: 6100 },
-    ];
+    : revenueData;
 
   const orderChartData = role === "buyer"
     ? [
@@ -138,14 +148,7 @@ export default function Dashboard() {
       { name: "Low Stock Alerts", total: buyerStats.low_stock_alerts || 0 },
       { name: "Saved Suppliers", total: buyerStats.saved_suppliers || 0 },
     ]
-    : medicineAnalytics.monthly_orders || [
-      { name: "Jan", total: 3200 },
-      { name: "Feb", total: 4100 },
-      { name: "Mar", total: 2800 },
-      { name: "Apr", total: 5300 },
-      { name: "May", total: 4800 },
-      { name: "Jun", total: 6100 },
-    ];
+    : orderTrendData;
 
   return (
     <div className="space-y-8">
@@ -171,10 +174,26 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {role === "admin" && (
           <>
-            <StatCard title="Total Users" value="2543" icon={Users} trend="+12% from last month" />
-            <StatCard title="Total Medicines" value="12300" icon={Pill} trend="+8% from last month" />
-            <StatCard title="Total Orders" value="45231" icon={ShoppingCart} trend="+22% from last month" />
-            <StatCard title="Platform Revenue" value="$2.4M" icon={DollarSign} trend="+18% from last month" />
+            <StatCard
+              title="Total Users"
+              value={dashboardInfo?.stats?.total_users ?? 0}
+              icon={Users}
+              trend={`${(dashboardInfo?.stats?.total_users_change ?? 0) >= 0 ? "+" : ""}${dashboardInfo?.stats?.total_users_change ?? 0}% from last month`} />
+            <StatCard
+              title="Total Medicines"
+              value={dashboardInfo?.stats?.total_medicines ?? 0}
+              icon={Pill}
+              trend={`${(dashboardInfo?.stats?.total_medicines_change ?? 0) >= 0 ? "+" : ""}${dashboardInfo?.stats?.total_medicines_change ?? 0}% from last month`} />
+            <StatCard
+              title="Total Orders"
+              value={dashboardInfo?.stats?.total_orders ?? 0}
+              icon={ShoppingCart}
+              trend={`${(dashboardInfo?.stats?.total_orders_change ?? 0) >= 0 ? "+" : ""}${dashboardInfo?.stats?.total_orders_change ?? 0}% from last month`} />
+            <StatCard
+              title="Platform Revenue"
+              value={formatCurrency(dashboardInfo?.stats?.platform_revenue)}
+              icon={DollarSign}
+              trend={`${(dashboardInfo?.stats?.platform_revenue_change ?? 0) >= 0 ? "+" : ""}${dashboardInfo?.stats?.platform_revenue_change ?? 0}% from last month`} />
           </>
         )}
 

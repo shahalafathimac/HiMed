@@ -30,7 +30,6 @@ urlpatterns = [
     path("orders/",include("apps.orders.urls")),
     path('contact/',include('apps.contact.urls')),
     path("notifications/",include("apps.notifications.urls")),
-    path("dashboard/",include("apps.dashboard.urls")),
 ]
 
 if settings.DEBUG:

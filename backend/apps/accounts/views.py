@@ -3,7 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login as django_login
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import transaction
@@ -15,8 +15,6 @@ from apps.notifications.services import create_notification
 from .tasks import (
     task_send_registration_email_to_user,
     task_send_registration_email_to_admin,
-    task_send_approval_email_to_user,
-    task_send_rejection_email_to_user,
 )
 
 def serialize_user(user):
@@ -44,13 +42,16 @@ class RegisterView(APIView):
             enqueue_email_task(task_send_registration_email_to_user, user.id)
             enqueue_email_task(task_send_registration_email_to_admin, user.id)
 
+            auto_approved = user.role == "admin"
+            message = (
+                "Registration successful. Your account is pending "
+                "admin approval."
+            ) if not auto_approved else (
+                "Registration successful. Admin accounts are auto-approved."
+            )
+
             return Response(
-                {
-                    "message": (
-                        "Registration successful. Your account is pending "
-                        "admin approval."
-                    )
-                },
+                {"message": message},
                 status=status.HTTP_201_CREATED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -93,6 +94,8 @@ def login_view(request):
             {"message": "Your account is pending admin approval."},
             status=403
         )
+
+    django_login(request, user)
 
     if user.is_mfa_enabled:
         return Response({
@@ -213,7 +216,11 @@ def profile_view(request):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsAdmin])
 def pending_users(request):
-    users = Account.objects.filter(is_approved=False)
+    users = Account.objects.filter(
+        is_approved=False,
+        is_superuser=False,
+        is_staff=False,
+    ).exclude(role="admin")
     data = [{
         "id": u.id,
         "username": u.username,
@@ -242,9 +249,6 @@ def approve_user(request, user_id):
         "approval"
     )
 
-
-    enqueue_email_task(task_send_approval_email_to_user, user.id)
-
     return Response({"message": "User approved successfully"})
 
 
@@ -256,7 +260,12 @@ def reject_user(request, user_id):
     except Account.DoesNotExist:
         return Response({"message": "User not found"}, status=404)
 
-    enqueue_email_task(task_send_rejection_email_to_user, user.id)
+    create_notification(
+        user,
+        "Account Rejected",
+        "Your account registration has been rejected by the admin.",
+        "general"
+    )
 
     user.delete()
     return Response({"message": "User rejected successfully"})

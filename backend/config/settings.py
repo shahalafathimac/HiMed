@@ -42,9 +42,24 @@ INSTALLED_APPS = [
     'apps.contact',
     'apps.notifications',
     'corsheaders',
+    'channels',
     'django_celery_beat',
     'django_celery_results',
 ]
+
+ASGI_APPLICATION = 'config.asgi.application'
+
+REDIS_HOST = config('REDIS_HOST', default='127.0.0.1')
+REDIS_PORT = config('REDIS_PORT', default=6379, cast=int)
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(REDIS_HOST, REDIS_PORT)],
+        },
+    },
+}
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -199,7 +214,7 @@ LOGGING = {
 }
 
 # Celery Configuration
-CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="sqs://")
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=f"redis://{REDIS_HOST}:{REDIS_PORT}/0")
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_ACCEPT_CONTENT = ['json']

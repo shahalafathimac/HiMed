@@ -5,6 +5,14 @@ export const fetchDashboardData = () => {
   return api.get("/dashboard/data/");
 };
 
+export const fetchRevenueOverview = () => {
+  return api.get("/dashboard/revenue-overview/");
+};
+
+export const fetchOrderTrends = () => {
+  return api.get("/dashboard/order-trends/");
+};
+
 // Medicines
 export const fetchMedicinesList = () => {
   return api.get("/medicines/list/");

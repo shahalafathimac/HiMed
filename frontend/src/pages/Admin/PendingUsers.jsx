@@ -49,6 +49,7 @@ export default function PendingUsers() {
     }
   });
 
+  const filteredPendingUsers = pendingUsers.filter((u) => u.role !== "admin");
   const buyers = allUsers.filter((u) => u.role === "buyer");
   const suppliers = allUsers.filter((u) => u.role === "supplier");
 
@@ -62,9 +63,9 @@ export default function PendingUsers() {
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-amber-500" />
             Pending Approvals
-            {pendingUsers.length > 0 && (
+            {filteredPendingUsers.length > 0 && (
               <Badge className="ml-2 bg-amber-100 text-amber-700">
-                {pendingUsers.length} waiting
+                {filteredPendingUsers.length} waiting
               </Badge>
             )}
           </CardTitle>
@@ -88,14 +89,14 @@ export default function PendingUsers() {
                   </TableCell>
                 </TableRow>
               )}
-              {!pendingLoading && pendingUsers.length === 0 && (
+              {!pendingLoading && filteredPendingUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-8 text-slate-500">
                     No pending users found.
                   </TableCell>
                 </TableRow>
               )}
-              {!pendingLoading && pendingUsers.map((user) => (
+              {!pendingLoading && filteredPendingUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>{user.email}</TableCell>

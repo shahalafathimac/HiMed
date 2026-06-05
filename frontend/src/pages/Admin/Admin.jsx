@@ -100,7 +100,7 @@ function Admin() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.map((user) => (
+                {users.filter((u) => u.role !== "admin").map((user) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{user.username}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.email}</td>
@@ -125,7 +125,7 @@ function Admin() {
                     </td>
                   </tr>
                 ))}
-                {users.length === 0 && (
+                {users.filter((u) => u.role !== "admin").length === 0 && (
                   <tr>
                     <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
                       No pending users found.

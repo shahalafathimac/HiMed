@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   LayoutDashboard,
@@ -31,6 +31,7 @@ import {
 import useAuthStore from "../store/useAuthStore";
 import { useNotifications } from "../hooks/useNotifications";
 import useWishlist from "../hooks/useWishlist";
+import useWebSocket from "../hooks/useWebSocket";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -47,6 +48,11 @@ export default function DashboardLayout() {
     notificationsLoading,
     markAsRead,
   } = useNotifications();
+  const queryClient = useQueryClient();
+
+  useWebSocket(() => {
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  });
 
   const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth >= 768);
