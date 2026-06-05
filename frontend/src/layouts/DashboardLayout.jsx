@@ -15,7 +15,7 @@ import {
   Sun,
   Dot,
   AlertTriangle,
-  Truck,
+
   Store,
   FileText,
   Heart,
@@ -149,11 +149,9 @@ export default function DashboardLayout() {
         { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
         { name: "Browse Medicines", href: "/buyer/medicines", icon: Pill },
         { name: "Order History", href: "/buyer/orders", icon: ShoppingCart },
-        { name: "Track Deliveries", href: "/buyer/deliveries", icon: Truck },
         { name: "Suppliers", href: "/buyer/suppliers", icon: Store },
         { name: "Invoices", href: "/buyer/invoices", icon: FileText },
         { name: "Wishlist", href: "/buyer/wishlist", icon: Heart },
-        
       ];
     }
     return [];

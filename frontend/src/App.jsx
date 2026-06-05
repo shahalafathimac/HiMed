@@ -90,7 +90,6 @@ function App() {
             <Route path="/buyer/medicines/:id" element={<RoleRoute role="buyer"><MedicineDetails /></RoleRoute>} />
             <Route path="/buyer/cart" element={<RoleRoute role="buyer"><Cart /></RoleRoute>} />
             <Route path="/buyer/orders" element={<RoleRoute role="buyer"><OrderHistory /></RoleRoute>} />
-            <Route path="/buyer/deliveries" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Track Deliveries" description="Track pending, processing, shipped, and out for delivery orders from your order history." /></RoleRoute>} />
             <Route path="/buyer/suppliers" element={<RoleRoute role="buyer"><BuyerSuppliers /></RoleRoute>} />
             <Route path="/buyer/invoices" element={<RoleRoute role="buyer"><BuyerPlaceholder title="Invoices" description="Invoices for completed purchases will appear here." /></RoleRoute>} />
             <Route path="/buyer/wishlist" element={<RoleRoute role="buyer"><Wishlist /></RoleRoute>} />
