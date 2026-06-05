@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -84,20 +84,17 @@ export default function DashboardLayout() {
 
   const cartCount = cartResponse?.data?.item_count || 0;
 
-  useEffect(() => {
-    setProfileForm({
-      username: user?.username || "",
-      email: user?.email || "",
-      phone_number: user?.phone_number || "",
-    });
-  }, [user]);
-
   const handleProfileSave = async () => {
     try {
       setIsSavingProfile(true);
       setProfileError("");
       const response = await updateProfile(profileForm);
       updateUser(response.data);
+      setProfileForm({
+        username: response.data?.username || "",
+        email: response.data?.email || "",
+        phone_number: response.data?.phone_number || "",
+      });
       setIsEditingProfile(false);
     } catch (err) {
       const data = err.response?.data;
@@ -227,7 +224,14 @@ export default function DashboardLayout() {
           <div className="p-4 border-t">
             <button
               type="button"
-              onClick={() => setIsProfileOpen(true)}
+              onClick={() => {
+                setProfileForm({
+                  username: user?.username || "",
+                  email: user?.email || "",
+                  phone_number: user?.phone_number || "",
+                });
+                setIsProfileOpen(true);
+              }}
               className="mb-4 flex w-full items-center space-x-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <div className="h-10 w-10 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white font-bold uppercase">

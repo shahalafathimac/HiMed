@@ -46,10 +46,10 @@ export default function VerifyMFA() {
       setError("");
 
       const mfaResponse = await verifyLoginMFA({ user_id: mfaUserId, otp });
-      const { access_token, refresh_token } = mfaResponse.data;
+      const { access_token, refresh_token, user } = mfaResponse.data;
 
       setAuth(
-        { id: mfaUserId, username: "User" },
+        user,
         access_token,
         refresh_token
       );

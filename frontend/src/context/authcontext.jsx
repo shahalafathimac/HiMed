@@ -1,7 +1,6 @@
-import { createContext, useState, useEffect } from "react";
+import { useState } from "react";
+import { AuthContext } from "./authContextValue";
 import { getCookie, setCookie, removeCookie } from "../utils/cookies";
-
-export const AuthContext = createContext();
 
 function AuthProvider({ children }) {
 
@@ -24,14 +23,6 @@ function AuthProvider({ children }) {
     setToken(null);
     setIsAuthenticated(false);
   };
-
-  useEffect(() => {
-    const storedToken = getCookie("access_token");
-    if (storedToken) {
-      setToken(storedToken);
-      setIsAuthenticated(true);
-    }
-  }, []);
 
   return (
     <AuthContext.Provider

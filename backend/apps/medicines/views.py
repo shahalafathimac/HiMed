@@ -16,7 +16,6 @@ from rest_framework.decorators import permission_classes
 
 Account = get_user_model()
 
-# Create your views here.
 class CreateMedicineView(APIView):
 
     permission_classes = [

@@ -1,34 +1,44 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { setupMFA, verifyMFA } from "../../services/authservice";
+import useAuthStore from "../../store/useAuthStore";
 import { Button } from "../../components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../../components/ui/card";
 import { QrCode, ShieldCheck, AlertCircle } from "lucide-react";
 
 export default function SetupMFA() {
+  const navigate = useNavigate();
+  const { updateUser } = useAuthStore();
   const [qrCode, setQrCode] = useState(null);
   const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!qrCode && !loading) {
-      handleGenerateQR();
-    }
-  }, []);
+    if (qrCode) return;
 
-  const handleGenerateQR = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await setupMFA();
-      setQrCode(res.data.qr_code);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to generate QR code. Make sure you are logged in.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    let isMounted = true;
+
+    const generateQR = async () => {
+      setError("");
+      try {
+        const res = await setupMFA();
+        if (isMounted) {
+          setQrCode(res.data.qr_code);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(err.response?.data?.message || "Failed to generate QR code. Make sure you are logged in.");
+        }
+      }
+    };
+
+    generateQR();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [qrCode]);
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
@@ -36,8 +46,9 @@ export default function SetupMFA() {
     setVerifying(true);
     setError("");
     try {
-      await verifyMFA(otp);
-      window.location.href = "/dashboard";
+      const res = await verifyMFA(otp);
+      updateUser(res.data?.user || { is_mfa_enabled: true });
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || "Invalid OTP. Please try again.");
     } finally {

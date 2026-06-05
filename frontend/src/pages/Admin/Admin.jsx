@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchPendingUsers, approveUser, rejectUser, fetchDashboardData } from "../../services/apiServices";
 
@@ -7,11 +7,18 @@ function Admin() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkAdminAndLoadUsers();
+  const loadUsers = useCallback(async () => {
+    try {
+      const res = await fetchPendingUsers();
+      setUsers(res.data);
+    } catch (error) {
+      console.error("Error loading pending users", error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const checkAdminAndLoadUsers = async () => {
+  const checkAdminAndLoadUsers = useCallback(async () => {
     try {
       const dashRes = await fetchDashboardData();
       if (dashRes.data.role !== "admin") {
@@ -23,24 +30,19 @@ function Admin() {
       console.error(err);
       navigate("/login");
     }
-  };
+  }, [loadUsers, navigate]);
 
-  const loadUsers = async () => {
-    try {
-      const res = await fetchPendingUsers();
-      setUsers(res.data);
-    } catch (error) {
-      console.error("Error loading pending users", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    queueMicrotask(() => {
+      checkAdminAndLoadUsers();
+    });
+  }, [checkAdminAndLoadUsers]);
 
   const handleApprove = async (id) => {
     try {
       await approveUser(id);
       loadUsers();
-    } catch (err) {
+    } catch {
       alert("Failed to approve user");
     }
   };
@@ -50,7 +52,7 @@ function Admin() {
     try {
       await rejectUser(id);
       loadUsers();
-    } catch (err) {
+    } catch {
       alert("Failed to reject user");
     }
   };

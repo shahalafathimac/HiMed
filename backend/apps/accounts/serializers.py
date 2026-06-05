@@ -21,20 +21,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        role = validated_data["role"]
         user = Account.objects.create_user(
             username=validated_data["username"],
             email=validated_data["email"],
             password=validated_data["password"],
-            role=validated_data["role"],
+            role=role,
             phone_number=validated_data["phone_number"],
         )
 
-        role = validated_data['role']
-        if role == 'supplier':
-            group = Group.objects.get(name='Supplier')
-        elif role == 'buyer':
-            group = Group.objects.get(name='Buyer')
-        elif role == 'admin':
-            group = Group.objects.get(name='Admin')
+        group, _ = Group.objects.get_or_create(name=role.capitalize())
         user.groups.add(group)
         return user

@@ -6,6 +6,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import transaction
 from .serializers import RegisterSerializer
 from .models import Account
 from .permissions import IsSupplier, IsBuyer, IsAdmin
@@ -15,7 +16,23 @@ from .tasks import (
     task_send_registration_email_to_user,
     task_send_registration_email_to_admin,
     task_send_approval_email_to_user,
+    task_send_rejection_email_to_user,
 )
+
+def serialize_user(user):
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "role": user.role,
+        "phone_number": user.phone_number,
+        "is_mfa_enabled": user.is_mfa_enabled,
+        "is_approved": user.is_approved,
+    }
+
+
+def enqueue_email_task(task, user_id):
+    transaction.on_commit(lambda: task.delay(user_id))
 
 
 class RegisterView(APIView):
@@ -24,12 +41,19 @@ class RegisterView(APIView):
         if serializer.is_valid():
             user = serializer.save()
 
-            # ✅ Celery: runs in background, user gets response immediately
-            task_send_registration_email_to_user.delay(user.id)
-            task_send_registration_email_to_admin.delay(user.id)
+            enqueue_email_task(task_send_registration_email_to_user, user.id)
+            enqueue_email_task(task_send_registration_email_to_admin, user.id)
 
-            return Response({"message": "User registered successfully"})
-        return Response(serializer.errors)
+            return Response(
+                {
+                    "message": (
+                        "Registration successful. Your account is pending "
+                        "admin approval."
+                    )
+                },
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerifyMFAView(APIView):
@@ -43,7 +67,10 @@ class VerifyMFAView(APIView):
             return Response({"message": "Invalid MFA Code"}, status=400)
         user.is_mfa_enabled = True
         user.save()
-        return Response({"message": "MFA Enabled Successfully"})
+        return Response({
+            "message": "MFA Enabled Successfully",
+            "user": serialize_user(user),
+        })
 
 
 @api_view(["POST"])
@@ -80,14 +107,7 @@ def login_view(request):
         "message": "Login successful",
         "access_token": str(refresh.access_token),
         "refresh_token": str(refresh),
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "phone_number": user.phone_number,
-            "is_mfa_enabled": user.is_mfa_enabled,
-        }
+        "user": serialize_user(user)
     })
 
 
@@ -138,13 +158,7 @@ def verify_login_mfa(request):
         "message": "Login Successful",
         "access_token": str(refresh.access_token),
         "refresh_token": str(refresh),
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "role": user.role,
-            "phone_number": user.phone_number,
-        }
+        "user": serialize_user(user)
     })
 
 
@@ -228,8 +242,8 @@ def approve_user(request, user_id):
         "approval"
     )
 
-    # ✅ Celery: approval email runs in background
-    task_send_approval_email_to_user.delay(user.id)
+
+    enqueue_email_task(task_send_approval_email_to_user, user.id)
 
     return Response({"message": "User approved successfully"})
 
@@ -241,6 +255,9 @@ def reject_user(request, user_id):
         user = Account.objects.get(id=user_id)
     except Account.DoesNotExist:
         return Response({"message": "User not found"}, status=404)
+
+    enqueue_email_task(task_send_rejection_email_to_user, user.id)
+
     user.delete()
     return Response({"message": "User rejected successfully"})
 

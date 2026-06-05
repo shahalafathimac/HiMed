@@ -43,13 +43,13 @@ def send_sms(phone_number, message):
                 "sender_id": "FSTSMS",
                 "message": message,
                 "language": "english",
-                "route": "p",        # ✅ changed from "p" to "q"
+                "route": "p",       
                 "numbers": normalized_number,
             },
             timeout=getattr(settings, "FAST2SMS_TIMEOUT", 20),
         )
 
-        # ✅ Handle empty response body
+        
         if response.status_code == 200:
             logger.info("Fast2SMS SMS sent successfully to %s", normalized_number)
             return {"return": True, "message": ["Message sent successfully"]}

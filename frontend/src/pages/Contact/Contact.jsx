@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useAuthStore from "../../store/useAuthStore";
 import {
   createContactMessage,
@@ -16,11 +16,18 @@ function Contact() {
   const [replyData, setReplyData] = useState({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    checkRoleAndLoadData();
+  const loadMessages = useCallback(async () => {
+    try {
+      const res = await fetchContactMessages();
+      setMessages(res.data);
+    } catch (err) {
+      console.error("Error loading messages", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const checkRoleAndLoadData = async () => {
+  const checkRoleAndLoadData = useCallback(async () => {
     try {
       const { isAuthenticated } = useAuthStore.getState();
       if (isAuthenticated) {
@@ -35,21 +42,16 @@ function Contact() {
       } else {
         setLoading(false);
       }
-    } catch (err) {
+    } catch {
       setLoading(false);
     }
-  };
+  }, [loadMessages]);
 
-  const loadMessages = async () => {
-    try {
-      const res = await fetchContactMessages();
-      setMessages(res.data);
-    } catch (err) {
-      console.error("Error loading messages", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    queueMicrotask(() => {
+      checkRoleAndLoadData();
+    });
+  }, [checkRoleAndLoadData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,7 +59,7 @@ function Contact() {
       await createContactMessage(formData);
       alert("Message sent successfully!");
       setFormData({ name: "", email: "", subject: "", message: "" });
-    } catch (err) {
+    } catch {
       alert("Failed to send message");
     }
   };
@@ -70,7 +72,7 @@ function Contact() {
       alert("Reply sent");
       setReplyData({...replyData, [id]: ""});
       loadMessages();
-    } catch (err) {
+    } catch {
       alert("Failed to send reply");
     }
   };
@@ -79,7 +81,7 @@ function Contact() {
     try {
       await resolveContactMessage(id);
       loadMessages();
-    } catch (err) {
+    } catch {
       alert("Failed to resolve message");
     }
   };

@@ -1,20 +1,45 @@
+import logging
 from django.core.mail import send_mail
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
+
 
 def send_himed_mail(subject, message, recipients):
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        recipients,
-        fail_silently=False
+    logger.info(
+        "Sending email | subject=%s | recipients=%s",
+        subject, recipients
     )
+    try:
+        sent = send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            recipients,
+            fail_silently=False
+        )
+        if sent:
+            logger.info(
+                "Email sent successfully | subject=%s | recipients=%s",
+                subject, recipients
+            )
+        else:
+            logger.warning(
+                "Email sent returned 0 | subject=%s | recipients=%s",
+                subject, recipients
+            )
+        return sent
+    except Exception as e:
+        logger.error(
+            "Email sending failed | subject=%s | recipients=%s | error=%s",
+            subject, recipients, str(e), exc_info=True
+        )
+        raise
 
 
 def send_registration_email_to_user(user):
 
-    subject = "[HiMed] Registration Received - Pending Approval"  # ✅ changed
+    subject = "[HiMed] Registration Received - Pending Approval" 
 
     message = f"""
 Hello {user.username},
@@ -39,7 +64,7 @@ HiMed Team
 
 def send_registration_email_to_admin(user):
 
-    subject = "[HiMed Admin] New User Pending Approval"  # ✅ changed
+    subject = "[HiMed Admin] New User Pending Approval"
 
     message = f"""
 A new user has registered on HiMed and is awaiting approval.
@@ -62,9 +87,36 @@ HiMed System
     )
 
 
+def send_rejection_email_to_user(user):
+
+    subject = "[HiMed] Account Registration Rejected"
+
+    message = f"""
+Hello {user.username},
+
+Thank you for your interest in joining HiMed.
+
+After reviewing your registration, we regret to inform you that
+your account has been rejected by the administrator.
+
+If you believe this is an error, please contact our support team.
+
+We appreciate your understanding.
+
+Best Regards,
+HiMed Team
+"""
+
+    send_himed_mail(
+        subject,
+        message,
+        [user.email]
+    )
+
+
 def send_approval_email_to_user(user):
 
-    subject = "[HiMed] Your Account is Approved - Login Now!"  # ✅ changed
+    subject = "[HiMed] Your Account is Approved - Login Now!" 
 
     message = f"""
 Hello {user.username},

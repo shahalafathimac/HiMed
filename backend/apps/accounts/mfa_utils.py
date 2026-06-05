@@ -1,11 +1,11 @@
+import logging
+import time
 import pyotp
 import qrcode
 from io import BytesIO
 import base64
 
-
-def generate_mfa_secret():
-    return pyotp.random_base32()
+logger = logging.getLogger(__name__)
 
 
 def generate_qr_code(user):
@@ -25,7 +25,14 @@ def generate_qr_code(user):
 
 def verify_totp(secret, otp):
     if not secret or not otp:
+        logger.warning("verify_totp skipped: missing secret or otp")
         return False
 
     totp = pyotp.TOTP(secret)
-    return totp.verify(otp, valid_window=1)
+    result = totp.verify(otp, valid_window=2)
+    if not result:
+        logger.warning(
+            "TOTP verify failed | secret_suffix=%s | otp=%s | ts=%s",
+            secret[-4:], otp, int(time.time())
+        )
+    return result

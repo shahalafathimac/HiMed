@@ -4,11 +4,8 @@ import {
   fetchLowStockMedicines,
   fetchMedicineAnalytics
 } from "../services/apiServices";
-import { useAuthStore } from "../store/useAuthStore";
 
 export const useDashboard = () => {
-  const { updateUser, user } = useAuthStore();
-
   // Get dashboard data (role, permissions)
   const { data: dashboardInfo = null, isLoading: dashboardLoading } = useQuery({
     queryKey: ["dashboardData"],

@@ -70,7 +70,7 @@ export default function PublicLayout() {
 
       <footer className="border-t bg-white dark:bg-slate-900 py-8">
         <div className="container mx-auto px-4 text-center text-sm text-slate-500">
-          <p>© 2026 HiMed Platform. All rights reserved.</p>
+          <p>&copy; 2026 HiMed Platform. All rights reserved.</p>
         </div>
       </footer>
     </div>

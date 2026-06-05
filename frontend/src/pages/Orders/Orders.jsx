@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   fetchDashboardData, 
   fetchOrderHistory, 
@@ -14,11 +14,7 @@ function Orders() {
   const [role, setRole] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const dashRes = await fetchDashboardData();
       const userRole = dashRes.data.role;
@@ -41,14 +37,20 @@ function Orders() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      loadData();
+    });
+  }, [loadData]);
 
   const handleCancel = async (id) => {
     if (!window.confirm("Are you sure you want to cancel this order?")) return;
     try {
       await cancelOrder(id);
       loadData();
-    } catch (err) {
+    } catch {
       alert("Failed to cancel order");
     }
   };
@@ -57,7 +59,7 @@ function Orders() {
     try {
       await updateOrderStatus(id, { status: newStatus });
       loadData();
-    } catch (err) {
+    } catch {
       alert("Failed to update status");
     }
   };

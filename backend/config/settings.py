@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 from decouple import config
 import sys
-from celery import Celery
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
@@ -165,36 +164,64 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 
+# Logging Configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'apps.accounts': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}
+
 # Celery Configuration
-CELERY_BROKER_URL = ("sqs://")
+CELERY_BROKER_URL = config("CELERY_BROKER_URL", default="sqs://")
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_CACHE_BACKEND = 'django-cache'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Asia/Kolkata' 
-CELERY_TASK_DEFAULT_QUEUE = config("SQS_QUEUE_NAME")
-CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=True, cast=bool)
+CELERY_TASK_DEFAULT_QUEUE = config("SQS_QUEUE_NAME", default="Himed-Queue")
+CELERY_TASK_ALWAYS_EAGER = config("CELERY_TASK_ALWAYS_EAGER", default=False, cast=bool)
 CELERY_TASK_EAGER_PROPAGATES = config("CELERY_TASK_EAGER_PROPAGATES", default=True, cast=bool)
-CELERY_TASK_ALWAYS_EAGER = True
 
 
 
 # Celery Beat (for scheduled tasks)
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "region": "ap-south-1",
-    "visibility_timeout": 3600,
-}
-
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "region": config("AWS_REGION"),
+    "region": config("AWS_REGION", default="ap-south-1"),
     "visibility_timeout": 3600,
     "predefined_queues": {
-        config("SQS_QUEUE_NAME"): {
-            "url": config("SQS_QUEUE_URL"),
-            "access_key_id": config("AWS_ACCESS_KEY_ID"),
-            "secret_access_key": config("AWS_SECRET_ACCESS_KEY"),
+        config("SQS_QUEUE_NAME", default="Himed-Queue"): {
+            "url": config("SQS_QUEUE_URL", default=""),
+            "access_key_id": config("AWS_ACCESS_KEY_ID", default=""),
+            "secret_access_key": config("AWS_SECRET_ACCESS_KEY", default=""),
         }
     }
 }

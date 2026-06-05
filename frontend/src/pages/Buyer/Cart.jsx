@@ -15,7 +15,7 @@ function Cart() {
   });
 
   const cart = cartResponse?.data;
-  const items = cart?.items || [];
+  const items = useMemo(() => cart?.items || [], [cart?.items]);
 
   const formatPrice = (price) =>
     new Intl.NumberFormat("en-IN", {

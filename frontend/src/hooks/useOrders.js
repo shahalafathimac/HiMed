@@ -2,15 +2,11 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
   placeOrder, 
   fetchOrderHistory, 
-  fetchOrderStatus, 
   cancelOrder,
   fetchSupplierOrders,
   fetchAdminOrders,
   updateOrderStatus,
-  fetchSupplierOrders as fetchOrdersForSupplier,
-  fetchAdminOrders as fetchOrdersForAdmin
 } from "../services/apiServices";
-import { useAuthStore } from "../store/useAuthStore";
 
 export const useOrders = () => {
   const queryClient = useQueryClient();

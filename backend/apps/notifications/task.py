@@ -1,7 +1,9 @@
 from apps.medicines.models import Medicine
+from celery import shared_task
 from .services import create_notification
 
 
+@shared_task
 def check_low_stock():
 
     medicines = Medicine.objects.filter(

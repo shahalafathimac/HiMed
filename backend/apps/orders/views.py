@@ -53,7 +53,7 @@ class PlaceOrderView(APIView):
             "order"
         )
 
-        # ✅ Celery background SMS
+        # Celery background SMS
         task_send_order_sms.delay(
             request.user.phone_number,
             "pending",
@@ -122,7 +122,7 @@ class CancelOrderView(APIView):
         order.status = "cancelled"
         order.save()
 
-        # ✅ Celery background SMS
+        # Celery background SMS
         task_send_order_sms.delay(
             request.user.phone_number,
             "cancelled",
@@ -170,7 +170,7 @@ class UpdateOrderStatusView(APIView):
         order.status = status_value
         order.save()
 
-        # ✅ Celery background SMS
+        # Celery background SMS
         task_send_order_sms.delay(
             order.buyer.phone_number,
             status_value,
@@ -401,7 +401,7 @@ class CheckoutCartView(APIView):
                 "order"
             )
 
-            # ✅ Celery background SMS
+           
             task_send_order_sms.delay(
                 request.user.phone_number,
                 "pending",
